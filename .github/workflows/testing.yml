@@ -1,0 +1,38 @@
+name: Falcon CLI Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  sanity:
+    name: sanity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.19
+        id: go
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - run: make clean
+      - run: make test-sanity
+
+  unit:
+    name: unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.19
+        id: go
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - run: make clean
+      - run: make test-unit
