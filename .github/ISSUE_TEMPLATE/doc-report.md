@@ -1,5 +1,5 @@
 ---
-name: Doc Report
+name: Documentation Report
 about: Raise an issue with the documentation.
 title: ''
 labels: documentation

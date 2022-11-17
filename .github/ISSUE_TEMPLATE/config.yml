@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Ask a question about the Falcon CLI tool
+    url: https://github.com/CrowdStrike/falcon-cli/discussions/new
+    about: Ask a question about the Falcon CLI tool if you are not sure if you should be creating an issue or feature request
