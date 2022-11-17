@@ -42,7 +42,10 @@ func CreateCLIAndRoot() (*CLI, *cobra.Command) {
 	cobra.OnInitialize(initConfig)
 
 	// Add the subcommands
-	c.addSubCommands()
+	err := c.addSubCommands()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	root := commands[0].Root()
 
