@@ -21,6 +21,9 @@ jobs:
         with:
           fetch-depth: 0
       - run: make clean
+      - run: |
+          make license
+          git diff --exit-code # fast-fail if license produced changes
       - run: make test-sanity
 
   unit:
