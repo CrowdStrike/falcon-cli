@@ -27,6 +27,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/crowdstrike/falcon-cli/internal/flags"
+	"github.com/crowdstrike/falcon-cli/pkg/cmd/sensor"
 	"github.com/crowdstrike/falcon-cli/pkg/cmd/version"
 	ver "github.com/crowdstrike/falcon-cli/pkg/version"
 	"github.com/spf13/cobra"
@@ -36,6 +37,7 @@ import (
 var (
 	commands = []*cobra.Command{
 		version.VersionCmd(),
+		sensor.SensorCmd(),
 	}
 	cfgFile string
 )
