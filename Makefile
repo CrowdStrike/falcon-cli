@@ -50,10 +50,14 @@ fix: ## Fixup files in the repo.
 setup-lint: ## Setup the lint
 	test -s $(LOCALBIN)/golangci-lint || { curl -sSfL $(GOLANGCI_INSTALL_SCRIPT) | bash -s -- -b $(LOCALBIN) $(subst v,,$(GOLANGCI_VERSION)); }
 
+.PHONY: license
+license: ## Add license header to files
+	test -s $(LOCALBIN)/addlicense || GOBIN=$(LOCALBIN) go install github.com/google/addlicense@latest
+	$(LOCALBIN)/addlicense -f LICENSE -l mit pkg/ cmd/ internal/
+
 .PHONY: lint
 lint: setup-lint ## Run the lint check
 	$(LOCALBIN)/golangci-lint run
-
 
 .PHONY: clean
 clean: ## Cleanup build artifacts and tool binaries.
