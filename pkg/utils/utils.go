@@ -55,6 +55,18 @@ func ConfigExists(path string) {
 	defer file.Close()
 }
 
+func ReadYAML(yamlContent interface{}, fileName string) any {
+	yamlFile, err := os.ReadFile(fileName)
+	if err != nil {
+		log.Fatalf("Unable to read data from the file: %v, %s", err, fileName)
+	}
+	err = yaml.Unmarshal(yamlFile, &yamlContent)
+	if err != nil {
+		log.Fatalf("Unmarshal: %v", err)
+	}
+	return yamlContent
+}
+
 // WriteYAML writes a YAML file to disk.
 func WriteYAML(yamlContent interface{}, fileName string) {
 	cfg, err := yaml.Marshal(&yamlContent)

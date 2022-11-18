@@ -23,12 +23,11 @@ package api
 import (
 	"context"
 	"fmt"
-
-	log "github.com/sirupsen/logrus"
+	"log"
 
 	"github.com/crowdstrike/falcon-cli/pkg/version"
-	fapi "github.com/crowdstrike/gofalcon/falcon"
-	fclient "github.com/crowdstrike/gofalcon/falcon/client"
+	falconapi "github.com/crowdstrike/gofalcon/falcon"
+	falconclient "github.com/crowdstrike/gofalcon/falcon/client"
 )
 
 type Config struct {
@@ -48,12 +47,12 @@ type Config struct {
 	RegistryToken string `yaml:"registry_token,omitempty"`
 }
 
-func Client(config Config) *fclient.CrowdStrikeAPISpecification {
-	client, err := fapi.NewClient(&fapi.ApiConfig{
-		ClientId:          config.ClientID,
-		ClientSecret:      config.ClientSecret,
-		MemberCID:         config.MemberCID,
-		Cloud:             fapi.Cloud(config.Cloud),
+func Client(c Config) *falconclient.CrowdStrikeAPISpecification {
+	client, err := falconapi.NewClient(&falconapi.ApiConfig{
+		ClientId:          c.ClientID,
+		ClientSecret:      c.ClientSecret,
+		MemberCID:         c.MemberCID,
+		Cloud:             falconapi.Cloud(c.Cloud),
 		Context:           context.Background(),
 		UserAgentOverride: fmt.Sprintf("falcon-cli/%s", version.Version),
 	})

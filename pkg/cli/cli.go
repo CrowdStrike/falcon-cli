@@ -107,8 +107,6 @@ func rootPersistentPreRun(cmd *cobra.Command, args []string) {
 }
 
 func initConfig() {
-	config := api.Config{}
-
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
@@ -134,10 +132,14 @@ func initConfig() {
 		}
 	} else {
 		utils.ConfigFile = viper.ConfigFileUsed()
-		config.ClientID = viper.GetString("client_id")
-		config.ClientSecret = viper.GetString("client_secret")
-		config.MemberCID = viper.GetString("member_cid")
-		config.Cloud = viper.GetString("cloud")
+		config := api.Config{
+			ClientID:     viper.GetString("client_id"),
+			ClientSecret: viper.GetString("client_secret"),
+			CID:          viper.GetString("cid"),
+			MemberCID:    viper.GetString("member_cid"),
+			Cloud:        viper.GetString("cloud"),
+		}
+
 		if config.Cloud == "" {
 			config.Cloud = "autodiscover"
 		}
