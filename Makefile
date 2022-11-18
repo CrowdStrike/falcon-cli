@@ -44,7 +44,7 @@ fix: ## Fixup files in the repo.
 	go mod tidy
 	go fmt ./...
 	make setup-lint
-	$(LOCALBIN)/golangci-lint run --fix
+	$(LOCALBIN)/golangci-lint run --fix --timeout=3m12s
 
 .PHONY: setup-lint
 setup-lint: ## Setup the lint
@@ -57,7 +57,7 @@ license: ## Add license header to files
 
 .PHONY: lint
 lint: setup-lint ## Run the lint check
-	$(LOCALBIN)/golangci-lint run
+	$(LOCALBIN)/golangci-lint run --timeout=3m12s
 
 .PHONY: clean
 clean: ## Cleanup build artifacts and tool binaries.
