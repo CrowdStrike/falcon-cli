@@ -21,7 +21,6 @@
 package utils
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -40,15 +39,12 @@ func ValidateRegExp(regex string, value string) bool {
 	return true
 }
 
-func DirExists(path string) {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		os.MkdirAll(filepath.Dir(path), 0700)
-	}
-}
-
 func ConfigExists(path string) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		os.MkdirAll(filepath.Dir(path), 0700)
+		err = os.MkdirAll(filepath.Dir(path), 0700)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	flags := os.O_WRONLY | os.O_CREATE | os.O_TRUNC
@@ -66,7 +62,7 @@ func WriteYAML(yamlContent interface{}, fileName string) {
 		log.Errorf("Error while Marshaling. %v", err)
 	}
 
-	err = ioutil.WriteFile(fileName, cfg, 0600)
+	err = os.WriteFile(fileName, cfg, 0600)
 	if err != nil {
 		log.Fatalf("Unable to write data into the file: %v, %s", err, fileName)
 	}
