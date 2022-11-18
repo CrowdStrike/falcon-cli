@@ -25,9 +25,11 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/crowdstrike/falcon-cli/pkg/utils"
 	"github.com/crowdstrike/falcon-cli/pkg/version"
 	falconapi "github.com/crowdstrike/gofalcon/falcon"
 	falconclient "github.com/crowdstrike/gofalcon/falcon/client"
+	"github.com/spf13/viper"
 )
 
 type Config struct {
@@ -47,7 +49,30 @@ type Config struct {
 	RegistryToken string `yaml:"registry_token,omitempty"`
 }
 
-func Client(c Config) *falconclient.CrowdStrikeAPISpecification {
+func (c Config) GetConfig() Config {
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatalf("Error reading config file, %s", err)
+	} else {
+		utils.ConfigFile = viper.ConfigFileUsed()
+		c = Config{
+			ClientID:     viper.GetString("client_id"),
+			ClientSecret: viper.GetString("client_secret"),
+			CID:          viper.GetString("cid"),
+			MemberCID:    viper.GetString("member_cid"),
+			Cloud:        viper.GetString("cloud"),
+		}
+
+		if c.Cloud == "" {
+			c.Cloud = "autodiscover"
+		}
+	}
+
+	return c
+}
+
+func Client() *falconclient.CrowdStrikeAPISpecification {
+	apiCfg := Config{}
+	c := apiCfg.GetConfig()
 	client, err := falconapi.NewClient(&falconapi.ApiConfig{
 		ClientId:          c.ClientID,
 		ClientSecret:      c.ClientSecret,
