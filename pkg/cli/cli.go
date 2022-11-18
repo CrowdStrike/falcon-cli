@@ -23,12 +23,16 @@ package cli
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
 
 	"github.com/crowdstrike/falcon-cli/internal/flags"
+	"github.com/crowdstrike/falcon-cli/pkg/api"
+	config "github.com/crowdstrike/falcon-cli/pkg/cmd/init"
 	"github.com/crowdstrike/falcon-cli/pkg/cmd/sensor"
 	"github.com/crowdstrike/falcon-cli/pkg/cmd/version"
+	"github.com/crowdstrike/falcon-cli/pkg/utils"
 	ver "github.com/crowdstrike/falcon-cli/pkg/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -36,6 +40,7 @@ import (
 
 var (
 	commands = []*cobra.Command{
+		config.NewInitCmd(),
 		version.VersionCmd(),
 		sensor.SensorCmd(),
 	}
@@ -102,21 +107,18 @@ func rootPersistentPreRun(cmd *cobra.Command, args []string) {
 }
 
 func initConfig() {
+	config := api.Config{}
+
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
+		utils.ConfigFile = cfgFile
 	} else {
 		// Find home directory.
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 
 		falconHome := fmt.Sprintf("%s/.falcon", home)
-		if err := os.Mkdir(falconHome, 0700); err != nil {
-			if !os.IsExist(err) {
-				log.Fatal(err)
-			}
-		}
-
 		// Search config in home directory with name "falcon" (without extension).
 		viper.AddConfigPath(falconHome)
 		viper.SetConfigType("yaml")
@@ -124,8 +126,20 @@ func initConfig() {
 	}
 
 	viper.AutomaticEnv()
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
-	}
+	viper.SetEnvPrefix("falcon")
 
+	if err := viper.ReadInConfig(); err != nil {
+		if utils.ConfigFile == "" {
+			utils.ConfigFile = filepath.Join(os.Getenv("HOME"), ".falcon", "falcon.yaml")
+		}
+	} else {
+		utils.ConfigFile = viper.ConfigFileUsed()
+		config.ClientID = viper.GetString("client_id")
+		config.ClientSecret = viper.GetString("client_secret")
+		config.MemberCID = viper.GetString("member_cid")
+		config.Cloud = viper.GetString("cloud")
+		if config.Cloud == "" {
+			config.Cloud = "autodiscover"
+		}
+	}
 }
