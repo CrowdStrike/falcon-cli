@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 
@@ -35,6 +36,7 @@ import (
 	"github.com/crowdstrike/falcon-cli/pkg/utils"
 	ver "github.com/crowdstrike/falcon-cli/pkg/version"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
@@ -77,6 +79,14 @@ func CreateCLIAndRoot() (*CLI, *cobra.Command) {
 	root := commands[0].Root()
 
 	root.PersistentFlags().Bool(flags.Verbose, false, "Enable verbose logging")
+
+	pf := root.PersistentFlags()
+	normalizeFunc := pf.GetNormalizeFunc()
+	pf.SetNormalizeFunc(func(fs *pflag.FlagSet, name string) pflag.NormalizedName {
+		result := normalizeFunc(fs, name)
+		name = strings.ReplaceAll(string(result), "-", "_")
+		return pflag.NormalizedName(name)
+	})
 	if err := viper.BindPFlags(root.PersistentFlags()); err != nil {
 		log.Fatalf("Failed to bind %s flags: %v", root.Name(), err)
 	}

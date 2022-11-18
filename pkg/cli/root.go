@@ -32,6 +32,7 @@ var (
 		`The CrowdStrike Falcon CLI allows you to work effortlessly
         with the CrowdStrike Falcon platform.
     `)
+	cid, clientID, clientSecret, memberCID, cloud string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -46,6 +47,11 @@ func newRootCmd() *cobra.Command {
 	cmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.falcon/falcon.yaml)")
 	cmd.Flags().Bool("version", false, "Show version")
 	cmd.PersistentFlags().Bool("help", false, "Show help for command")
+	cmd.PersistentFlags().StringVarP(&cid, "cid", "f", "", "The Falcon Customer ID (CID)")
+	cmd.PersistentFlags().StringVarP(&clientID, "client-id", "u", "", "The Falcon API Oauth client ID")
+	cmd.PersistentFlags().StringVarP(&clientSecret, "client-secret", "s", "", "The Falcon API Oauth client secret")
+	cmd.PersistentFlags().StringVarP(&memberCID, "member-cid", "m", "", "The Falcon API member CID")
+	cmd.PersistentFlags().StringVarP(&cloud, "cloud", "r", "autodiscover", "The Falcon API Cloud Region")
 
 	return cmd
 }
