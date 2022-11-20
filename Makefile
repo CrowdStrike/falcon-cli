@@ -1,10 +1,5 @@
 SHELL = /bin/bash
 
-# Build-time variables to inject into binaries
-export VERSION = $(shell (test "$(shell git describe --tags)" = "$(shell git describe --tags --abbrev=0)" && echo $(shell git describe --tags)) || echo $(shell git describe --tags --abbrev=0)+git)
-export GIT_VERSION = $(shell git describe --dirty --tags --always)
-export GIT_COMMIT = $(shell git rev-parse HEAD)
-
 LOCALBIN ?= $(shell pwd)/bin
 $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
@@ -64,19 +59,11 @@ clean: ## Cleanup build artifacts and tool binaries.
 	rm -rf $(BUILD_DIR) dist $(LOCALBIN)
 
 ##@ Build
-
-.PHONY: install
-install: ## Install falcon
-	go install $(GO_BUILD_ARGS) ./cmd/falcon
-
 .PHONY: build
 build: ## Build falcon.
-	@echo $(VERSION)
-	@mkdir -p $(BUILD_DIR)
-	go build $(GO_BUILD_ARGS) -o $(BUILD_DIR) ./cmd/falcon
+	goreleaser build --snapshot --single-target --rm-dist -o $(LOCALBIN)/falcon
 
 ##@ Test
-
 .PHONY: test
 test: test-static #test-e2e ## Run all tests
 
