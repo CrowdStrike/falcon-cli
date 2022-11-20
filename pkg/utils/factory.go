@@ -18,9 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package flags
+package utils
 
-// global command-line flags
-const (
-	Verbose = "verbose"
+import (
+	"github.com/crowdstrike/falcon-cli/internal/config"
+	"github.com/crowdstrike/falcon-cli/pkg/iostreams"
+	"github.com/crowdstrike/gofalcon/falcon/client"
 )
+
+type Factory struct {
+	IOStreams *iostreams.IOStreams
+
+	Config       func() (*config.Config, error)
+	FalconClient func() (*client.CrowdStrikeAPISpecification, error)
+}

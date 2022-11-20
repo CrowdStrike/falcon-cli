@@ -17,36 +17,54 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-
-package sensor
+package factory
 
 import (
-	downloadCmd "github.com/crowdstrike/falcon-cli/pkg/cmd/sensor/download"
+	"github.com/crowdstrike/falcon-cli/internal/config"
+	"github.com/crowdstrike/falcon-cli/pkg/iostreams"
 	"github.com/crowdstrike/falcon-cli/pkg/utils"
-	"github.com/spf13/cobra"
-	"k8s.io/kubectl/pkg/util/templates"
+	"github.com/crowdstrike/gofalcon/falcon"
+	"github.com/crowdstrike/gofalcon/falcon/client"
 )
 
-var (
-	shortDesc = `Manage the CrowdStrike Falcon Sensor`
-	longDesc  = templates.LongDesc(`Manage the CrowdStrike Falcon Sensor`)
-	examples  = templates.Examples(`
-        # Download the CrowdStrike Falcon Sensor
-        falcon sensor download
-    `)
-)
-
-// NewCmdSensor represents the sensor command
-func NewSensorCmd(f *utils.Factory) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "sensor",
-		Short:   shortDesc,
-		Long:    longDesc,
-		Example: examples,
+func New(appVersion string) *utils.Factory {
+	f := &utils.Factory{
+		Config: configFunc(),
 	}
 
-	cmd.AddCommand(
-		downloadCmd.NewCmdDownload(f),
-	)
-	return cmd
+	f.FalconClient = falconClientFunc(f, appVersion) // Depends on Config
+	f.IOStreams = ioStreams(f)
+
+	return f
+}
+
+func configFunc() func() (*config.Config, error) {
+	return func() (*config.Config, error) {
+		config, err := config.NewConfig()
+		return &config, err
+	}
+
+}
+
+func falconClientFunc(f *utils.Factory, appVersion string) func() (*client.CrowdStrikeAPISpecification, error) {
+	return func() (*client.CrowdStrikeAPISpecification, error) {
+		cfg, err := f.Config()
+
+		if err != nil {
+			return nil, err
+		}
+
+		client, err := falcon.NewClient(cfg.ApiConfig(appVersion))
+		return client, err
+	}
+}
+
+func ioStreams(f *utils.Factory) *iostreams.IOStreams {
+	i := &iostreams.IOStreams{}
+	io := i.NewIOStreams()
+
+	// TODO: Implement a way to opt out of prompts (perhaps a FALCON_PROMPT_DISABLE env var)
+	io.SetNeverPrompt(false)
+
+	return io
 }

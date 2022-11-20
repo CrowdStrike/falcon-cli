@@ -23,102 +23,56 @@ package cli
 import (
 	"fmt"
 	"os"
-	"strings"
 
-	log "github.com/sirupsen/logrus"
-
-	"github.com/crowdstrike/falcon-cli/internal/flags"
-	config "github.com/crowdstrike/falcon-cli/pkg/cmd/init"
-	"github.com/crowdstrike/falcon-cli/pkg/cmd/sensor"
-	"github.com/crowdstrike/falcon-cli/pkg/cmd/version"
+	"github.com/MakeNowJust/heredoc"
+	"github.com/crowdstrike/falcon-cli/internal/build"
+	"github.com/crowdstrike/falcon-cli/internal/config"
+	"github.com/crowdstrike/falcon-cli/pkg/cmd/factory"
+	"github.com/crowdstrike/falcon-cli/pkg/cmd/root"
 	"github.com/crowdstrike/falcon-cli/pkg/utils"
-	ver "github.com/crowdstrike/falcon-cli/pkg/version"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
-var (
-	commands = []*cobra.Command{
-		config.NewInitCmd(),
-		version.VersionCmd(),
-		sensor.SensorCmd(),
-	}
-	cfgFile string
-)
-
-type CLI struct {
-	// Root command name.
-	commandName string
-
-	// Root command.
-	cmd *cobra.Command
-}
-
 func Run() error {
-	c, _ := CreateCLIAndRoot()
-	return c.cmd.Execute()
-}
-
-func CreateCLIAndRoot() (*CLI, *cobra.Command) {
-
-	c := &CLI{}
-	c.cmd = newRootCmd()
-	c.commandName = "falcon"
-
+	cmdFactory := factory.New(build.Version)
+	rootCmd := root.NewCmdRoot(cmdFactory, build.Version)
 	cobra.OnInitialize(initConfig)
 
-	// Add the subcommands
-	err := c.addSubCommands()
+	cfg, err := cmdFactory.Config()
+
+	stderr := cmdFactory.IOStreams.ErrOut
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(stderr, "Error loading config: %v", err)
 	}
 
-	root := commands[0].Root()
-
-	root.PersistentFlags().Bool(flags.Verbose, false, "Enable verbose logging")
-
-	pf := root.PersistentFlags()
-	normalizeFunc := pf.GetNormalizeFunc()
-	pf.SetNormalizeFunc(func(fs *pflag.FlagSet, name string) pflag.NormalizedName {
-		result := normalizeFunc(fs, name)
-		name = strings.ReplaceAll(string(result), "-", "_")
-		return pflag.NormalizedName(name)
-	})
-	if err := viper.BindPFlags(root.PersistentFlags()); err != nil {
-		log.Fatalf("Failed to bind %s flags: %v", root.Name(), err)
-	}
-	c.cmd.PersistentPreRun = rootPersistentPreRun
-
-	return c, root
-}
-
-// addSubCommands adds the additional commands.
-func (c *CLI) addSubCommands() error {
-	for _, cmd := range commands {
-		for _, subCmd := range c.cmd.Commands() {
-			if cmd.Name() == subCmd.Name() {
-				return fmt.Errorf("command %q already exists", cmd.Name())
-			}
+	// Support falcon help <command>
+	if len(os.Args) > 1 && os.Args[1] == "help" {
+		if len(os.Args) > 2 {
+			os.Args[1] = os.Args[2]
+		} else {
+			os.Args = append(os.Args, "--help")
 		}
-		c.cmd.AddCommand(cmd)
-	}
-	return nil
-}
-
-func rootPersistentPreRun(cmd *cobra.Command, args []string) {
-	if ok, err := cmd.Flags().GetBool("version"); err == nil && ok {
-		fmt.Println(ver.VersionString())
-		os.Exit(0)
 	}
 
+	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		// Do auth check if the command requires authentication
+		if utils.IsAuthEnabled(cmd) && !utils.CheckAuth(*cfg) {
+			return fmt.Errorf(authHelp())
+		}
+		return nil
+	}
+
+	return rootCmd.Execute()
 }
 
 func initConfig() {
+	cfgFile := viper.GetString("config")
+
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
-		utils.ConfigFile = cfgFile
+		config.ConfigFile = cfgFile
 	} else {
 		// Find home directory.
 		home, err := os.UserHomeDir()
@@ -133,4 +87,12 @@ func initConfig() {
 
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("falcon")
+}
+
+func authHelp() string {
+	return heredoc.Doc(`
+		Authentication is required for this command. Please use 'falcon auth config' to configure your credentials.
+
+		For more information, run: 'falcon auth config --help'
+		`)
 }

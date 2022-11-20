@@ -18,35 +18,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package sensor
+package utils
 
 import (
-	downloadCmd "github.com/crowdstrike/falcon-cli/pkg/cmd/sensor/download"
-	"github.com/crowdstrike/falcon-cli/pkg/utils"
+	"github.com/crowdstrike/falcon-cli/internal/config"
 	"github.com/spf13/cobra"
-	"k8s.io/kubectl/pkg/util/templates"
 )
 
-var (
-	shortDesc = `Manage the CrowdStrike Falcon Sensor`
-	longDesc  = templates.LongDesc(`Manage the CrowdStrike Falcon Sensor`)
-	examples  = templates.Examples(`
-        # Download the CrowdStrike Falcon Sensor
-        falcon sensor download
-    `)
-)
+func CheckAuth(cfg config.Config) bool {
+	// Verify required variables are set
+	if cfg.ClientID == "" || cfg.ClientSecret == "" {
+		return false
+	}
+	return true
+}
 
-// NewCmdSensor represents the sensor command
-func NewSensorCmd(f *utils.Factory) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "sensor",
-		Short:   shortDesc,
-		Long:    longDesc,
-		Example: examples,
+// IsAuthCheckEnabled checks if the command opts out of the auth check
+func IsAuthEnabled(cmd *cobra.Command) bool {
+	if cmd.Name() == "help" {
+		return false
 	}
 
-	cmd.AddCommand(
-		downloadCmd.NewCmdDownload(f),
-	)
-	return cmd
+	for c := cmd; c.Parent() != nil; c = c.Parent() {
+		if c.Annotations["authSkipCheck"] == "true" {
+			return false
+		}
+	}
+	return true
 }
