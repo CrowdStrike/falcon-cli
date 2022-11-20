@@ -18,25 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package version
+package build
 
 import (
-	"fmt"
-	"runtime"
+	"runtime/debug"
 )
 
-var (
-	Version    = "unknown"
-	GitVersion = "unknown"
-	GitCommit  = "unknown"
-)
+// Version is pulled from build.
+var Version string
 
-func VersionString() string {
-	version := GitVersion
-	if version == "unknown" {
-		version = Version
+func init() {
+	buildInfo, ok := debug.ReadBuildInfo()
+	if ok {
+		Version = buildInfo.Main.Version
 	}
-
-	return fmt.Sprintf("falcon version: %q, commit: %q, go version: %q, GOOS: %q, GOARCH: %q",
-		version, GitCommit, runtime.Version(), runtime.GOOS, runtime.GOARCH)
 }

@@ -22,8 +22,10 @@ package version
 
 import (
 	"fmt"
+	"strings"
 
-	"github.com/crowdstrike/falcon-cli/pkg/version"
+	"github.com/crowdstrike/falcon-cli/internal/build"
+	"github.com/crowdstrike/falcon-cli/pkg/utils"
 	"github.com/spf13/cobra"
 	"k8s.io/kubectl/pkg/util/templates"
 )
@@ -37,19 +39,29 @@ var (
     `)
 )
 
-// versionCmd represents the version command
-func VersionCmd() *cobra.Command {
+func NewCmdVersion(f *utils.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "version",
 		Short:   shortDesc,
 		Long:    longDesc,
 		Example: examples,
-		RunE:    runVer,
+		RunE:    runVer(f),
+		Annotations: map[string]string{
+			"authSkipCheck": "true",
+		},
 	}
 	return cmd
 }
 
-func runVer(_ *cobra.Command, _ []string) error {
-	fmt.Println(version.VersionString())
-	return nil
+func VersionFormat(version string) string {
+	version = strings.TrimPrefix(version, "v")
+
+	return fmt.Sprintf("falcon cli version:  %s\n", version)
+}
+
+func runVer(f *utils.Factory) func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		fmt.Fprint(f.IOStreams.Out, VersionFormat(build.Version))
+		return nil
+	}
 }
