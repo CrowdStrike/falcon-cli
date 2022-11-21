@@ -38,10 +38,10 @@ func New(appVersion string) *utils.Factory {
 	return f
 }
 
-func configFunc() func() (*config.Config, error) {
-	return func() (*config.Config, error) {
+func configFunc() func() (config.Config, error) {
+	return func() (config.Config, error) {
 		config, err := config.NewConfig()
-		return &config, err
+		return config, err
 	}
 
 }

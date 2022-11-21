@@ -57,7 +57,10 @@ func Run() error {
 
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
 		// Do auth check if the command requires authentication
-		if utils.IsAuthEnabled(cmd) && !utils.CheckAuth(*cfg) {
+		fmt.Println("rootCmd.PersistentPreRunE")
+		fmt.Println(cmd.Name())
+		fmt.Println(utils.IsAuthCheckEnabled(cmd))
+		if utils.IsAuthCheckEnabled(cmd) && !utils.CheckAuth(cfg) {
 			return fmt.Errorf(authHelp())
 		}
 		return nil

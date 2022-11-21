@@ -21,9 +21,12 @@
 package root
 
 import (
+	"fmt"
 	"log"
 	"strings"
 
+	"github.com/crowdstrike/falcon-cli/internal/build"
+	authCmd "github.com/crowdstrike/falcon-cli/pkg/cmd/auth"
 	sensorCmd "github.com/crowdstrike/falcon-cli/pkg/cmd/sensor"
 	versionCmd "github.com/crowdstrike/falcon-cli/pkg/cmd/version"
 	"github.com/crowdstrike/falcon-cli/pkg/utils"
@@ -61,7 +64,7 @@ func NewCmdRoot(f *utils.Factory, version string) *cobra.Command {
 		Use:   "falcon <command> <subcommand> [flags]",
 		Short: shortDesc,
 		Long:  longDesc,
-		RunE:  runHelp,
+		RunE:  runRoot,
 	}
 
 	cmd.PersistentFlags().StringVar(&opts.CfgFile, "config", "", "config file (default is $HOME/.falcon/falcon.yaml)")
@@ -73,26 +76,37 @@ func NewCmdRoot(f *utils.Factory, version string) *cobra.Command {
 	cmd.PersistentFlags().StringVarP(&opts.MemberCID, "member-cid", "m", "", "The Falcon API member CID")
 	cmd.PersistentFlags().StringVarP(&opts.Cloud, "cloud", "r", "autodiscover", "The Falcon API Cloud Region")
 
-	pf := cmd.PersistentFlags()
-	normalizeFunc := pf.GetNormalizeFunc()
-	pf.SetNormalizeFunc(func(f *pflag.FlagSet, name string) pflag.NormalizedName {
-		result := normalizeFunc(f, name)
-		name = strings.ReplaceAll(string(result), "-", "_")
-		return pflag.NormalizedName(name)
-	})
-
 	// Bind flags to viper
 	if err := viper.GetViper().BindPFlags(cmd.PersistentFlags()); err != nil {
 		log.Fatalf("Error binding flags to viper: %v", err)
 	}
 
+	pf := cmd.PersistentFlags()
+	normalizeFunc := pf.GetNormalizeFunc()
+	pf.SetNormalizeFunc(func(f *pflag.FlagSet, name string) pflag.NormalizedName {
+		fmt.Println("normalizeFunc", name)
+		result := normalizeFunc(f, name)
+		name = strings.ReplaceAll(string(result), "-", "_")
+		fmt.Println("normalizeFunc", name)
+		return pflag.NormalizedName(name)
+	})
+
 	// Add subcommands
 	cmd.AddCommand(versionCmd.NewCmdVersion(f))
 	cmd.AddCommand(sensorCmd.NewSensorCmd(f))
+	cmd.AddCommand(authCmd.NewAuthCmd(f))
+
+	utils.DisableAuthCheck(cmd)
 
 	return cmd
 }
 
-func runHelp(cmd *cobra.Command, args []string) error {
+func runRoot(cmd *cobra.Command, args []string) error {
+
+	if cmd.Flags().Changed("version") {
+		versionCmd.VersionFormat(build.Version)
+		return nil
+	}
+
 	return cmd.Help()
 }

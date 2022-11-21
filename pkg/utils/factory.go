@@ -29,6 +29,6 @@ import (
 type Factory struct {
 	IOStreams *iostreams.IOStreams
 
-	Config       func() (*config.Config, error)
+	Config       func() (config.Config, error)
 	FalconClient func() (*client.CrowdStrikeAPISpecification, error)
 }

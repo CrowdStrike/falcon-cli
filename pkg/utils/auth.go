@@ -21,6 +21,8 @@
 package utils
 
 import (
+	"fmt"
+
 	"github.com/crowdstrike/falcon-cli/internal/config"
 	"github.com/spf13/cobra"
 )
@@ -33,16 +35,27 @@ func CheckAuth(cfg config.Config) bool {
 	return true
 }
 
-// IsAuthCheckEnabled checks if the command opts out of the auth check
-func IsAuthEnabled(cmd *cobra.Command) bool {
-	if cmd.Name() == "help" {
+// DisableAuthCheck disables the auth check for a command
+func DisableAuthCheck(cmd *cobra.Command) {
+	if cmd.Annotations == nil {
+		cmd.Annotations = map[string]string{}
+	}
+
+	cmd.Annotations["skipAuthCheck"] = "true"
+}
+
+func IsAuthCheckEnabled(cmd *cobra.Command) bool {
+	fmt.Println(cmd.Annotations)
+	switch cmd.Name() {
+	case "help", cobra.ShellCompRequestCmd, cobra.ShellCompNoDescRequestCmd:
 		return false
 	}
 
 	for c := cmd; c.Parent() != nil; c = c.Parent() {
-		if c.Annotations["authSkipCheck"] == "true" {
+		if c.Annotations != nil && c.Annotations["skipAuthCheck"] == "true" {
 			return false
 		}
 	}
+
 	return true
 }
