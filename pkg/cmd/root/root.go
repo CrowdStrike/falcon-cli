@@ -21,9 +21,7 @@
 package root
 
 import (
-	"fmt"
 	"log"
-	"strings"
 
 	"github.com/crowdstrike/falcon-cli/internal/build"
 	authCmd "github.com/crowdstrike/falcon-cli/pkg/cmd/auth"
@@ -31,7 +29,6 @@ import (
 	versionCmd "github.com/crowdstrike/falcon-cli/pkg/cmd/version"
 	"github.com/crowdstrike/falcon-cli/pkg/utils"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"k8s.io/kubectl/pkg/util/templates"
 )
@@ -76,27 +73,24 @@ func NewCmdRoot(f *utils.Factory, version string) *cobra.Command {
 	cmd.PersistentFlags().StringVarP(&opts.MemberCID, "member-cid", "m", "", "The Falcon API member CID")
 	cmd.PersistentFlags().StringVarP(&opts.Cloud, "cloud", "r", "autodiscover", "The Falcon API Cloud Region")
 
+	//TODO: Doesn't work?
+	// pf := cmd.PersistentFlags()
+	// normalizeFunc := pf.GetNormalizeFunc()
+	// pf.SetNormalizeFunc(func(f *pflag.FlagSet, name string) pflag.NormalizedName {
+	// 	result := normalizeFunc(f, name)
+	// 	name = strings.ReplaceAll(string(result), "-", "_")
+	// 	return pflag.NormalizedName(name)
+	// })
+
 	// Bind flags to viper
 	if err := viper.GetViper().BindPFlags(cmd.PersistentFlags()); err != nil {
 		log.Fatalf("Error binding flags to viper: %v", err)
 	}
 
-	pf := cmd.PersistentFlags()
-	normalizeFunc := pf.GetNormalizeFunc()
-	pf.SetNormalizeFunc(func(f *pflag.FlagSet, name string) pflag.NormalizedName {
-		fmt.Println("normalizeFunc", name)
-		result := normalizeFunc(f, name)
-		name = strings.ReplaceAll(string(result), "-", "_")
-		fmt.Println("normalizeFunc", name)
-		return pflag.NormalizedName(name)
-	})
-
 	// Add subcommands
 	cmd.AddCommand(versionCmd.NewCmdVersion(f))
 	cmd.AddCommand(sensorCmd.NewSensorCmd(f))
 	cmd.AddCommand(authCmd.NewAuthCmd(f))
-
-	utils.DisableAuthCheck(cmd)
 
 	return cmd
 }

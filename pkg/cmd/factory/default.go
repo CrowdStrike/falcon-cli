@@ -20,6 +20,9 @@
 package factory
 
 import (
+	"os"
+	"strings"
+
 	"github.com/crowdstrike/falcon-cli/internal/config"
 	"github.com/crowdstrike/falcon-cli/pkg/iostreams"
 	"github.com/crowdstrike/falcon-cli/pkg/utils"
@@ -63,8 +66,12 @@ func ioStreams(f *utils.Factory) *iostreams.IOStreams {
 	i := &iostreams.IOStreams{}
 	io := i.NewIOStreams()
 
-	// TODO: Implement a way to opt out of prompts (perhaps a FALCON_PROMPT_DISABLE env var)
-	io.SetNeverPrompt(false)
+	// check if env var FALCON_DIABLE_PROMPT is set to true || TRUE
+	if strings.EqualFold(os.Getenv("FALCON_DISABLE_PROMPT"), "true") {
+		io.SetNeverPrompt(true)
+	} else {
+		io.SetNeverPrompt(false)
+	}
 
 	return io
 }

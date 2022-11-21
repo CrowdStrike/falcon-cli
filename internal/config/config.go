@@ -32,19 +32,19 @@ import (
 // Struct to hold persistent configuration for falcon
 type Config struct {
 	// The Falcon Customer ID
-	CID string `yaml:"cid,omitempty"`
+	CID string `mapstructure:"cid,omitempty"`
 	// The Falcon API client ID.
-	ClientID string `yaml:"client_id"`
+	ClientID string `mapstructure:"client_id"`
 	// The Falcon API client secret.
-	ClientSecret string `yaml:"client_secret"`
+	ClientSecret string `mapstructure:"client_secret"`
 	// The Falcon API base URL.
-	MemberCID string `yaml:"member_cid,omitempty"`
+	MemberCID string `mapstructure:"member_cid,omitempty"`
 	// The Falcon API cloud region.
-	Cloud string `yaml:"cloud,omitempty"`
+	Cloud string `mapstructure:"cloud,omitempty"`
 	// The OAuth token returned from the Falcon API.
-	OauthToken string `yaml:"oauth_token,omitempty"`
+	OauthToken string `mapstructure:"oauth_token,omitempty"`
 	// The Container Registry OAuth token returned from the Falcon API.
-	RegistryToken string `yaml:"registry_token,omitempty"`
+	RegistryToken string `mapstructure:"registry_token,omitempty"`
 }
 
 var ConfigFile string
@@ -60,15 +60,16 @@ func NewConfig() (Config, error) {
 
 	ConfigFile = viper.ConfigFileUsed()
 
-	c.ClientID = viper.GetString("client_id")
-	c.ClientSecret = viper.GetString("client_secret")
-	c.CID = viper.GetString("cid")
-	c.MemberCID = viper.GetString("member_cid")
-	c.Cloud = viper.GetString("cloud")
+	fmt.Println("ConfigFile: ", viper.ConfigFileUsed())
+	viper.Unmarshal(c)
+	fmt.Println("Config: ", c)
 
 	if c.Cloud == "" {
 		c.Cloud = "autodiscover"
 	}
+
+	fmt.Println("default cloud ", viper.GetString("default.cid"))
+	fmt.Println("cloud", viper.GetString("cid"))
 
 	return *c, nil
 }

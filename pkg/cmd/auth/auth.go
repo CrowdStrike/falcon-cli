@@ -29,8 +29,6 @@ func NewAuthCmd(f *utils.Factory) *cobra.Command {
 	}
 
 	// Add subcommands
-	utils.DisableAuthCheck(cmd)
-
 	cmd.AddCommand(authConfigCmd.NewCmdConfig(f))
 
 	return cmd

@@ -21,8 +21,6 @@
 package utils
 
 import (
-	"fmt"
-
 	"github.com/crowdstrike/falcon-cli/internal/config"
 	"github.com/spf13/cobra"
 )
@@ -45,7 +43,6 @@ func DisableAuthCheck(cmd *cobra.Command) {
 }
 
 func IsAuthCheckEnabled(cmd *cobra.Command) bool {
-	fmt.Println(cmd.Annotations)
 	switch cmd.Name() {
 	case "help", cobra.ShellCompRequestCmd, cobra.ShellCompNoDescRequestCmd:
 		return false

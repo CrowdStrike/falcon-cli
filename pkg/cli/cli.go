@@ -23,6 +23,7 @@ package cli
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/crowdstrike/falcon-cli/internal/build"
@@ -57,9 +58,6 @@ func Run() error {
 
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
 		// Do auth check if the command requires authentication
-		fmt.Println("rootCmd.PersistentPreRunE")
-		fmt.Println(cmd.Name())
-		fmt.Println(utils.IsAuthCheckEnabled(cmd))
 		if utils.IsAuthCheckEnabled(cmd) && !utils.CheckAuth(cfg) {
 			return fmt.Errorf(authHelp())
 		}
@@ -85,11 +83,15 @@ func initConfig() {
 		// Search config in home directory with name "falcon" (without extension).
 		viper.AddConfigPath(falconHome)
 		viper.SetConfigType("yaml")
-		viper.SetConfigName("falcon")
+		viper.SetConfigName("config")
 	}
 
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("falcon")
+
+	viper.Debug()
+
 }
 
 func authHelp() string {
