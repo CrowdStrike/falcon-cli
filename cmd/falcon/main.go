@@ -21,6 +21,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/crowdstrike/falcon-cli/pkg/cli"
@@ -28,6 +29,7 @@ import (
 
 func main() {
 	if err := cli.Run(); err != nil {
+		fmt.Printf("Error: %s", err)
 		os.Exit(1)
 	}
 	os.Exit(0)

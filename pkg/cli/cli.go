@@ -48,15 +48,6 @@ func Run() error {
 		fmt.Fprintf(stderr, "Error loading config: %v", err)
 	}
 
-	// Support falcon help <command>
-	if len(os.Args) > 1 && os.Args[1] == "help" {
-		if len(os.Args) > 2 {
-			os.Args[1] = os.Args[2]
-		} else {
-			os.Args = append(os.Args, "--help")
-		}
-	}
-
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
 		err := initConfig(cmd)
 
