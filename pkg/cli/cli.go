@@ -22,6 +22,7 @@ package cli
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -32,13 +33,13 @@ import (
 	"github.com/crowdstrike/falcon-cli/pkg/cmd/root"
 	"github.com/crowdstrike/falcon-cli/pkg/utils"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
 func Run() error {
 	cmdFactory := factory.New(build.Version)
 	rootCmd := root.NewCmdRoot(cmdFactory, build.Version)
-	cobra.OnInitialize(initConfig)
 
 	cfg, err := cmdFactory.Config()
 
@@ -57,7 +58,16 @@ func Run() error {
 	}
 
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
-		// Do auth check if the command requires authentication
+		err := initConfig(cmd)
+
+		if err != nil {
+			return err
+		}
+
+		if err = viper.GetViper().BindPFlags(cmd.PersistentFlags()); err != nil {
+			log.Fatalf("Error binding flags to viper: %v", err)
+		}
+		//Do auth check if the command requires authentication
 		if utils.IsAuthCheckEnabled(cmd) && !utils.CheckAuth(cfg) {
 			return fmt.Errorf(authHelp())
 		}
@@ -67,12 +77,14 @@ func Run() error {
 	return rootCmd.Execute()
 }
 
-func initConfig() {
-	cfgFile := viper.GetString("config")
+func initConfig(cmd *cobra.Command) error {
+	v := viper.GetViper()
+
+	cfgFile := v.GetString("config")
 
 	if cfgFile != "" {
 		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
+		v.SetConfigFile(cfgFile)
 		config.ConfigFile = cfgFile
 	} else {
 		// Find home directory.
@@ -81,17 +93,31 @@ func initConfig() {
 
 		falconHome := fmt.Sprintf("%s/.falcon", home)
 		// Search config in home directory with name "falcon" (without extension).
-		viper.AddConfigPath(falconHome)
-		viper.SetConfigType("yaml")
-		viper.SetConfigName("config")
+		v.AddConfigPath(falconHome)
+		v.SetConfigType("yaml")
+		v.SetConfigName("config")
 	}
 
-	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
-	viper.AutomaticEnv()
-	viper.SetEnvPrefix("falcon")
+	if err := v.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			return fmt.Errorf("Error reading config file: %v", err)
+		}
+	}
 
-	viper.Debug()
+	v.SetEnvPrefix("falcon")
+	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	v.AutomaticEnv()
 
+	bindFlags(cmd, v)
+
+	return nil
+}
+
+func bindFlags(cmd *cobra.Command, v *viper.Viper) {
+	cmd.Flags().VisitAll(func(f *pflag.Flag) {
+		viperKey := strings.ReplaceAll(f.Name, "-", "_")
+		v.BindPFlag(viperKey, f)
+	})
 }
 
 func authHelp() string {

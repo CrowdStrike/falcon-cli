@@ -21,15 +21,16 @@
 package root
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/crowdstrike/falcon-cli/internal/build"
+	"github.com/crowdstrike/falcon-cli/internal/config"
 	authCmd "github.com/crowdstrike/falcon-cli/pkg/cmd/auth"
 	sensorCmd "github.com/crowdstrike/falcon-cli/pkg/cmd/sensor"
 	versionCmd "github.com/crowdstrike/falcon-cli/pkg/cmd/version"
+	"github.com/crowdstrike/falcon-cli/pkg/iostreams"
 	"github.com/crowdstrike/falcon-cli/pkg/utils"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"k8s.io/kubectl/pkg/util/templates"
 )
 
@@ -43,14 +44,9 @@ var (
 )
 
 type RootOptions struct {
-	CfgFile      string
-	CID          string
-	ClientID     string
-	ClientSecret string
-	MemberCID    string
-	Cloud        string
-	Version      bool
-	Help         bool
+	IO      *iostreams.IOStreams
+	Config  config.Config
+	Version bool
 }
 
 // NewCmdRoot represents the base command when called without any subcommands
@@ -61,17 +57,29 @@ func NewCmdRoot(f *utils.Factory, version string) *cobra.Command {
 		Use:   "falcon <command> <subcommand> [flags]",
 		Short: shortDesc,
 		Long:  longDesc,
-		RunE:  runRoot,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			opts := &RootOptions{
+				IO: f.IOStreams,
+			}
+
+			cfg, err := f.Config()
+			if err != nil {
+				return err
+			}
+			opts.Config = cfg
+
+			return runRoot(cmd, opts)
+		},
 	}
 
-	cmd.PersistentFlags().StringVar(&opts.CfgFile, "config", "", "config file (default is $HOME/.falcon/falcon.yaml)")
+	cmd.PersistentFlags().String("config", "", "config file (default is $HOME/.falcon/falcon.yaml)")
 	cmd.Flags().BoolVar(&opts.Version, "version", false, "Show version")
-	cmd.PersistentFlags().BoolVar(&opts.Help, "help", false, "Show help for command")
-	cmd.PersistentFlags().StringVarP(&opts.CID, "cid", "f", "", "The Falcon Customer ID (CID)")
-	cmd.PersistentFlags().StringVarP(&opts.ClientID, "client-id", "u", "", "The Falcon API Oauth client ID")
-	cmd.PersistentFlags().StringVarP(&opts.ClientSecret, "client-secret", "s", "", "The Falcon API Oauth client secret")
-	cmd.PersistentFlags().StringVarP(&opts.MemberCID, "member-cid", "m", "", "The Falcon API member CID")
-	cmd.PersistentFlags().StringVarP(&opts.Cloud, "cloud", "r", "autodiscover", "The Falcon API Cloud Region")
+	cmd.PersistentFlags().Bool("help", false, "Show help for command")
+	cmd.PersistentFlags().StringP("cid", "f", "", "The Falcon Customer ID (CID)")
+	cmd.PersistentFlags().StringP("client-id", "u", "", "The Falcon API Oauth client ID")
+	cmd.PersistentFlags().StringP("client-secret", "s", "", "The Falcon API Oauth client secret")
+	cmd.PersistentFlags().StringP("member-cid", "m", "", "The Falcon API member CID")
+	cmd.PersistentFlags().StringP("cloud", "r", "autodiscover", "The Falcon API Cloud Region")
 
 	//TODO: Doesn't work?
 	// pf := cmd.PersistentFlags()
@@ -82,24 +90,20 @@ func NewCmdRoot(f *utils.Factory, version string) *cobra.Command {
 	// 	return pflag.NormalizedName(name)
 	// })
 
-	// Bind flags to viper
-	if err := viper.GetViper().BindPFlags(cmd.PersistentFlags()); err != nil {
-		log.Fatalf("Error binding flags to viper: %v", err)
-	}
-
 	// Add subcommands
 	cmd.AddCommand(versionCmd.NewCmdVersion(f))
 	cmd.AddCommand(sensorCmd.NewSensorCmd(f))
 	cmd.AddCommand(authCmd.NewAuthCmd(f))
 
+	utils.DisableAuthCheck(cmd)
+
 	return cmd
 }
 
-func runRoot(cmd *cobra.Command, args []string) error {
-
+func runRoot(cmd *cobra.Command, opts *RootOptions) error {
 	if cmd.Flags().Changed("version") {
-		versionCmd.VersionFormat(build.Version)
-		return nil
+		_, err := fmt.Fprint(opts.IO.Out, versionCmd.VersionFormat(build.Version))
+		return err
 	}
 
 	return cmd.Help()

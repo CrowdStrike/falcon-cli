@@ -52,24 +52,15 @@ var ConfigFile string
 func NewConfig() (Config, error) {
 	c := &Config{}
 
-	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			return *c, err
-		}
-	}
-
-	ConfigFile = viper.ConfigFileUsed()
-
-	fmt.Println("ConfigFile: ", viper.ConfigFileUsed())
-	viper.Unmarshal(c)
-	fmt.Println("Config: ", c)
-
 	if c.Cloud == "" {
 		c.Cloud = "autodiscover"
 	}
 
-	fmt.Println("default cloud ", viper.GetString("default.cid"))
-	fmt.Println("cloud", viper.GetString("cid"))
+	c.CID = viper.GetViper().GetString("cid")
+	c.ClientID = viper.GetViper().GetString("client_id")
+	c.ClientSecret = viper.GetViper().GetString("client_secret")
+	c.MemberCID = viper.GetViper().GetString("member_cid")
+	c.Cloud = viper.GetViper().GetString("cloud")
 
 	return *c, nil
 }

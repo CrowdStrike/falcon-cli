@@ -56,7 +56,7 @@ func NewCmdVersion(f *utils.Factory) *cobra.Command {
 func VersionFormat(version string) string {
 	version = strings.TrimPrefix(version, "v")
 
-	return fmt.Sprintf("falcon cli version:  %s\n", version)
+	return fmt.Sprintf("falcon cli version: %s commit: %s, build date: %s\n", version, build.Commit, build.Date)
 }
 
 func runVer(f *utils.Factory) func(cmd *cobra.Command, args []string) error {

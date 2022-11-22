@@ -20,16 +20,9 @@
 
 package build
 
-import (
-	"runtime/debug"
+// Version info is inserted at build time
+var (
+	Version = "dev"
+	Commit  = "none"
+	Date    = "unknown"
 )
-
-// Version is pulled from build.
-var Version string
-
-func init() {
-	buildInfo, ok := debug.ReadBuildInfo()
-	if ok {
-		Version = buildInfo.Main.Version
-	}
-}

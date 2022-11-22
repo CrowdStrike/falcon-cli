@@ -35,12 +35,8 @@ func NewCmdConfig(f *utils.Factory) *cobra.Command {
 			}
 			opts.Config = cfg
 
-			// if any persisten flags client-id, client-secret, cid are not set then set interactive to true
-			if cmd.Flags().Changed("client-id") || cmd.Flags().Changed("client-secret") || cmd.Flags().Changed("cid") {
-				opts.Interactive = false
-			} else {
-				opts.Interactive = true
-			}
+			//TODO: add logic to turn interative on/off based on required flags being passsed in
+			opts.Interactive = true
 
 			if opts.Interactive && !opts.IO.CanPrompt() {
 				return fmt.Errorf("client-id and client-secret must be provided as arguments when not running interactively\n")
@@ -49,7 +45,6 @@ func NewCmdConfig(f *utils.Factory) *cobra.Command {
 			return configRun(opts)
 		},
 	}
-
 	utils.DisableAuthCheck(cmd)
 
 	return cmd

@@ -25,6 +25,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// CheckAuth checks if required authentication is configured
 func CheckAuth(cfg config.Config) bool {
 	// Verify required variables are set
 	if cfg.ClientID == "" || cfg.ClientSecret == "" {
@@ -42,9 +43,10 @@ func DisableAuthCheck(cmd *cobra.Command) {
 	cmd.Annotations["skipAuthCheck"] = "true"
 }
 
+// IsAuthCheckEnabled checks if the auth check is enabled for a command
 func IsAuthCheckEnabled(cmd *cobra.Command) bool {
 	switch cmd.Name() {
-	case "help", cobra.ShellCompRequestCmd, cobra.ShellCompNoDescRequestCmd:
+	case "help", cobra.ShellCompRequestCmd, cobra.ShellCompNoDescRequestCmd, "falcon":
 		return false
 	}
 
