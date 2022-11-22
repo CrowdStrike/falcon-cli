@@ -48,15 +48,17 @@ func ConfigExists(path string) {
 	}
 
 	flags := os.O_WRONLY | os.O_CREATE | os.O_TRUNC
-	file, err := os.OpenFile(path, flags, 0600)
+	file, err := os.OpenFile(filepath.Clean(path), flags, 0600)
 	if err != nil {
 		log.Fatalf("Failed to open %s for writing: %s", path, err)
 	}
-	defer file.Close()
+	if err = file.Close(); err != nil {
+		log.Fatalf("Failed to close %s: %s", path, err)
+	}
 }
 
 func ReadYAML(yamlContent interface{}, fileName string) any {
-	yamlFile, err := os.ReadFile(fileName)
+	yamlFile, err := os.ReadFile(filepath.Clean(fileName))
 	if err != nil {
 		log.Fatalf("Unable to read data from the file: %v, %s", err, fileName)
 	}
@@ -74,7 +76,7 @@ func WriteYAML(yamlContent interface{}, fileName string) {
 		log.Errorf("Error while Marshaling. %v", err)
 	}
 
-	err = os.WriteFile(fileName, cfg, 0600)
+	err = os.WriteFile(filepath.Clean(fileName), cfg, 0600)
 	if err != nil {
 		log.Fatalf("Unable to write data into the file: %v, %s", err, fileName)
 	}
