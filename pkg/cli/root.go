@@ -21,6 +21,7 @@
 package cli
 
 import (
+	"github.com/crowdstrike/falcon-cli/internal/flags"
 	"github.com/spf13/cobra"
 	"k8s.io/kubectl/pkg/util/templates"
 )
@@ -45,8 +46,9 @@ func newRootCmd() *cobra.Command {
 	}
 
 	cmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.falcon/falcon.yaml)")
-	cmd.Flags().Bool("version", false, "Show version")
+	cmd.PersistentFlags().Bool("version", false, "Show version")
 	cmd.PersistentFlags().Bool("help", false, "Show help for command")
+	cmd.PersistentFlags().Bool(flags.Verbose, false, "Enable verbose logging")
 	cmd.PersistentFlags().StringVarP(&cid, "cid", "f", "", "The Falcon Customer ID (CID)")
 	cmd.PersistentFlags().StringVarP(&clientID, "client-id", "u", "", "The Falcon API Oauth client ID")
 	cmd.PersistentFlags().StringVarP(&clientSecret, "client-secret", "s", "", "The Falcon API Oauth client secret")

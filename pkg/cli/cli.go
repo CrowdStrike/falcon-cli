@@ -27,7 +27,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/crowdstrike/falcon-cli/internal/flags"
 	config "github.com/crowdstrike/falcon-cli/pkg/cmd/init"
 	"github.com/crowdstrike/falcon-cli/pkg/cmd/sensor"
 	"github.com/crowdstrike/falcon-cli/pkg/cmd/version"
@@ -44,7 +43,8 @@ var (
 		version.VersionCmd(),
 		sensor.SensorCmd(),
 	}
-	cfgFile string
+	cfgFile  string
+	replacer = strings.NewReplacer("-", "_", ".", "_")
 )
 
 type CLI struct {
@@ -76,18 +76,12 @@ func CreateCLIAndRoot() (*CLI, *cobra.Command) {
 
 	root := commands[0].Root()
 
-	root.PersistentFlags().Bool(flags.Verbose, false, "Enable verbose logging")
-
-	pf := root.PersistentFlags()
-	normalizeFunc := pf.GetNormalizeFunc()
-	pf.SetNormalizeFunc(func(fs *pflag.FlagSet, name string) pflag.NormalizedName {
-		result := normalizeFunc(fs, name)
-		name = strings.ReplaceAll(string(result), "-", "_")
-		return pflag.NormalizedName(name)
+	root.PersistentFlags().VisitAll(func(flag *pflag.Flag) {
+		if err := viper.BindPFlag(strings.ReplaceAll(flag.Name, "-", "_"), flag); err != nil {
+			return
+		}
 	})
-	if err := viper.BindPFlags(root.PersistentFlags()); err != nil {
-		log.Fatalf("Failed to bind %s flags: %v", root.Name(), err)
-	}
+
 	c.cmd.PersistentPreRun = rootPersistentPreRun
 
 	return c, root
@@ -131,6 +125,7 @@ func initConfig() {
 		viper.SetConfigName("falcon")
 	}
 
-	viper.AutomaticEnv()
 	viper.SetEnvPrefix("falcon")
+	viper.SetEnvKeyReplacer(replacer)
+	viper.AutomaticEnv()
 }
