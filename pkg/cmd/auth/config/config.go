@@ -3,6 +3,8 @@ package config
 import (
 	"fmt"
 
+	"github.com/AlecAivazis/survey/v2"
+	"github.com/MakeNowJust/heredoc"
 	"github.com/crowdstrike/falcon-cli/internal/config"
 	"github.com/crowdstrike/falcon-cli/pkg/iostreams"
 	"github.com/crowdstrike/falcon-cli/pkg/utils"
@@ -14,6 +16,8 @@ type ConfigOptions struct {
 	IO          *iostreams.IOStreams
 	Config      config.Config
 	Interactive bool
+
+	Selector string
 }
 
 func NewCmdConfig(f *utils.Factory) *cobra.Command {
@@ -22,12 +26,13 @@ func NewCmdConfig(f *utils.Factory) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "config",
-		Short: "Configure falcon CLI with CrowdStrike Falcon API",
+		Use:   "config <profile>",
+		Short: "Configures a profile to use with CrowdStrike Falcon API",
 		Long: templates.LongDesc(`
 		Configure falcon CLI with CrowdStrike Falcon API.
 		`),
 		Aliases: []string{"login", "init"},
+		Args:    cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -35,11 +40,16 @@ func NewCmdConfig(f *utils.Factory) *cobra.Command {
 			}
 			opts.Config = cfg
 
-			//TODO: add logic to turn interative on/off based on required flags being passsed in
-			opts.Interactive = true
+			if len(args) > 0 {
+				opts.Selector = args[1]
+			}
 
-			if opts.Interactive && !opts.IO.CanPrompt() {
-				return fmt.Errorf("client-id and client-secret must be provided as arguments when not running interactively\n")
+			if !opts.IO.CanPrompt() {
+				return fmt.Errorf(heredoc.Doc(`
+				 Interactive mode is disabled in this terminal.
+
+				 Please run this command in an interactive terminal.
+				`))
 			}
 
 			return configRun(opts)
@@ -51,13 +61,55 @@ func NewCmdConfig(f *utils.Factory) *cobra.Command {
 }
 
 func configRun(opts *ConfigOptions) error {
-	fmt.Println("configRun")
-	fmt.Println(opts)
-	fmt.Println(opts.Config.CID)
-	fmt.Println(opts.Config.ClientID)
-	fmt.Println(opts.Config.ClientSecret)
-	fmt.Println(opts.Config.MemberCID)
-	fmt.Println(opts.Config.Cloud)
+	var qs = []*survey.Question{
+		{
+			Name: "clientId",
+			Prompt: &survey.Password{
+				Message: "Enter your CrowdStrike API Client ID",
+			},
+		},
+		{
+			Name: "clientSecret",
+			Prompt: &survey.Password{
+				Message: "Enter your CrowdStrike API Client Secret",
+			},
+		},
+		{
+			Name: "cid",
+			Prompt: &survey.Input{
+				Message: "Enter your CrowdStrike Customer ID (CID)",
+			},
+		},
+		{
+			Name: "memberCid",
+			Prompt: &survey.Input{
+				Message: "Enter your CrowdStrike Member CID",
+			},
+		},
+		{
+			// TODO: Should store valid options somewhere else perhaps use gofalcon
+			Name: "cloud",
+			Prompt: &survey.Select{
+				Message: "Select your CrowdStrike Cloud",
+				Options: []string{"us-1", "us-2", "eu-1"},
+			},
+		},
+	}
 
-	return nil
+	if opts.Selector == "" {
+		// prompt for profile name
+		qs = append(qs, &survey.Question{
+			Name: "profile",
+			Prompt: &survey.Input{
+				Message: "What is the name of the profile you want to configure?",
+				Default: "default",
+			},
+		})
+	}
+
+	err := survey.Ask(qs, &opts.Config)
+
+	// TODO: Validate and write config
+
+	return err
 }

@@ -32,19 +32,21 @@ import (
 // Struct to hold persistent configuration for falcon
 type Config struct {
 	// The Falcon Customer ID
-	CID string `mapstructure:"cid,omitempty"`
+	CID string `yaml:"cid,omitempty"`
 	// The Falcon API client ID.
-	ClientID string `mapstructure:"client_id"`
+	ClientID string `yaml:"client_id"`
 	// The Falcon API client secret.
-	ClientSecret string `mapstructure:"client_secret"`
+	ClientSecret string `yaml:"client_secret"`
 	// The Falcon API base URL.
-	MemberCID string `mapstructure:"member_cid,omitempty"`
+	MemberCID string `yaml:"member_cid,omitempty"`
 	// The Falcon API cloud region.
-	Cloud string `mapstructure:"cloud,omitempty"`
+	Cloud string `yaml:"cloud,omitempty"`
 	// The OAuth token returned from the Falcon API.
-	OauthToken string `mapstructure:"oauth_token,omitempty"`
+	OauthToken string `yaml:"oauth_token,omitempty"`
 	// The Container Registry OAuth token returned from the Falcon API.
-	RegistryToken string `mapstructure:"registry_token,omitempty"`
+	RegistryToken string `yaml:"registry_token,omitempty"`
+	// The Profile to use for the CLI
+	Profile string `yaml:"profile,omitempty"`
 }
 
 var ConfigFile string
@@ -56,11 +58,13 @@ func NewConfig() (Config, error) {
 		c.Cloud = "autodiscover"
 	}
 
-	c.CID = viper.GetViper().GetString("cid")
-	c.ClientID = viper.GetViper().GetString("client_id")
-	c.ClientSecret = viper.GetViper().GetString("client_secret")
-	c.MemberCID = viper.GetViper().GetString("member_cid")
-	c.Cloud = viper.GetViper().GetString("cloud")
+	profile := viper.GetViper().GetString("profile")
+
+	c.CID = getViperKey("cid", profile)
+	c.ClientID = getViperKey("client_id", profile)
+	c.ClientSecret = getViperKey("client_secret", profile)
+	c.MemberCID = getViperKey("member_cid", profile)
+	c.Cloud = getViperKey("cloud", profile)
 
 	return *c, nil
 }
@@ -74,4 +78,13 @@ func (c Config) ApiConfig(appVersion string) *falcon.ApiConfig {
 		Context:           context.Background(),
 		UserAgentOverride: fmt.Sprintf("falcon-cli/%s", build.Version),
 	}
+}
+
+func getViperKey(key string, profile string) string {
+	if profile == "" {
+		return key
+	}
+
+	profileKey := fmt.Sprintf("%s.%s", profile, key)
+	return viper.GetViper().GetString(profileKey)
 }

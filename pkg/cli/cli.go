@@ -106,17 +106,32 @@ func initConfig(cmd *cobra.Command) error {
 
 	v.SetEnvPrefix("falcon")
 	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
-	v.AutomaticEnv()
 
 	bindFlags(cmd, v)
 
 	return nil
 }
 
+// bindFlags binds the flags to the viper config
 func bindFlags(cmd *cobra.Command, v *viper.Viper) {
+	v.BindPFlag("profile", cmd.Flags().Lookup("profile"))
+
 	cmd.Flags().VisitAll(func(f *pflag.Flag) {
+		if f.Name == "profile" {
+			v.BindEnv(f.Name, "FALCON_PROFILE")
+			return
+		}
+
+		// change the flag name to snake_case
 		viperKey := strings.ReplaceAll(f.Name, "-", "_")
+
+		// add the profile flag in front of the viper key
+		viperKey = fmt.Sprintf("%s.%s", v.GetString("profile"), viperKey)
+
 		v.BindPFlag(viperKey, f)
+
+		// bind env var over the new viper key (profile.flag)
+		v.BindEnv(viperKey, fmt.Sprintf("FALCON_%s", strings.ToUpper(f.Name)))
 	})
 }
 

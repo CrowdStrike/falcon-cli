@@ -80,15 +80,7 @@ func NewCmdRoot(f *utils.Factory, version string) *cobra.Command {
 	cmd.PersistentFlags().StringP("client-secret", "s", "", "The Falcon API Oauth client secret")
 	cmd.PersistentFlags().StringP("member-cid", "m", "", "The Falcon API member CID")
 	cmd.PersistentFlags().StringP("cloud", "r", "autodiscover", "The Falcon API Cloud Region")
-
-	//TODO: Doesn't work?
-	// pf := cmd.PersistentFlags()
-	// normalizeFunc := pf.GetNormalizeFunc()
-	// pf.SetNormalizeFunc(func(f *pflag.FlagSet, name string) pflag.NormalizedName {
-	// 	result := normalizeFunc(f, name)
-	// 	name = strings.ReplaceAll(string(result), "-", "_")
-	// 	return pflag.NormalizedName(name)
-	// })
+	cmd.PersistentFlags().StringP("profile", "p", "default", "Use a specific profile from your config file")
 
 	// Add subcommands
 	cmd.AddCommand(versionCmd.NewCmdVersion(f))
