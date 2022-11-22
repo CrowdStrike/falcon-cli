@@ -27,6 +27,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/crowdstrike/falcon-cli/internal/flags"
 	config "github.com/crowdstrike/falcon-cli/pkg/cmd/init"
 	"github.com/crowdstrike/falcon-cli/pkg/cmd/sensor"
 	"github.com/crowdstrike/falcon-cli/pkg/cmd/version"
@@ -101,9 +102,22 @@ func (c *CLI) addSubCommands() error {
 }
 
 func rootPersistentPreRun(cmd *cobra.Command, args []string) {
+	formatter := &log.TextFormatter{}
+	formatter.TimestampFormat = "2006-01-02 15:04:05"
+	formatter.FullTimestamp = true
+	formatter.DisableLevelTruncation = true
+	formatter.DisableColors = false
+	formatter.ForceColors = true
+	log.SetFormatter(formatter)
+
 	if ok, err := cmd.Flags().GetBool("version"); err == nil && ok {
 		fmt.Println(ver.VersionString())
 		os.Exit(0)
+	}
+
+	if viper.GetBool(flags.Verbose) {
+		log.SetLevel(log.DebugLevel)
+		log.Debug("Debug logging is set")
 	}
 
 }
