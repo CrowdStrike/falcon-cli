@@ -23,10 +23,11 @@ package root
 import (
 	"fmt"
 
-	"github.com/crowdstrike/falcon-cli/internal/config"
-	authCmd "github.com/crowdstrike/falcon-cli/pkg/cmd/auth"
-	sensorCmd "github.com/crowdstrike/falcon-cli/pkg/cmd/sensor"
+	"github.com/crowdstrike/falcon-cli/pkg/cmd/auth"
+	"github.com/crowdstrike/falcon-cli/pkg/cmd/sensor"
 	versionCmd "github.com/crowdstrike/falcon-cli/pkg/cmd/version"
+	"github.com/crowdstrike/falcon-cli/pkg/config"
+	"github.com/crowdstrike/falcon-cli/pkg/factory"
 	"github.com/crowdstrike/falcon-cli/pkg/iostreams"
 	"github.com/crowdstrike/falcon-cli/pkg/utils"
 	"github.com/crowdstrike/falcon-cli/pkg/version"
@@ -50,7 +51,7 @@ type RootOptions struct {
 }
 
 // NewCmdRoot represents the base command when called without any subcommands
-func NewCmdRoot(f *utils.Factory, version string) *cobra.Command {
+func NewCmdRoot(f *factory.Factory, version string) *cobra.Command {
 	opts := &RootOptions{}
 
 	cmd := &cobra.Command{
@@ -73,7 +74,7 @@ func NewCmdRoot(f *utils.Factory, version string) *cobra.Command {
 	}
 
 	cmd.PersistentFlags().String("config", "", "config file (default is $HOME/.falcon/falcon.yaml)")
-	cmd.Flags().BoolVar(&opts.Version, "version", false, "Show version")
+	cmd.PersistentFlags().BoolVar(&opts.Version, "version", false, "Show version")
 	cmd.PersistentFlags().Bool("help", false, "Show help for command")
 	cmd.PersistentFlags().StringP("cid", "f", "", "The Falcon Customer ID (CID)")
 	cmd.PersistentFlags().StringP("client-id", "u", "", "The Falcon API Oauth client ID")
@@ -84,8 +85,8 @@ func NewCmdRoot(f *utils.Factory, version string) *cobra.Command {
 
 	// Add subcommands
 	cmd.AddCommand(versionCmd.NewCmdVersion(f))
-	cmd.AddCommand(sensorCmd.NewSensorCmd(f))
-	cmd.AddCommand(authCmd.NewAuthCmd(f))
+	cmd.AddCommand(sensor.NewSensorCmd(f))
+	cmd.AddCommand(auth.NewAuthCmd(f))
 
 	utils.DisableAuthCheck(cmd)
 

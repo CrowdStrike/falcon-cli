@@ -21,11 +21,11 @@
 package auth
 
 import (
-	"github.com/crowdstrike/falcon-cli/pkg/utils"
 	"github.com/spf13/cobra"
 	"k8s.io/kubectl/pkg/util/templates"
 
 	authConfigCmd "github.com/crowdstrike/falcon-cli/pkg/cmd/auth/config"
+	"github.com/crowdstrike/falcon-cli/pkg/factory"
 )
 
 var (
@@ -39,7 +39,7 @@ var (
     `)
 )
 
-func NewAuthCmd(f *utils.Factory) *cobra.Command {
+func NewAuthCmd(f *factory.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "auth <command>",
 		Short:   "Authenticate falcon CLI with CrowdStrike Falcon API",

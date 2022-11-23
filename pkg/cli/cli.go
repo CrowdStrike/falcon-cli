@@ -27,9 +27,9 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/crowdstrike/falcon-cli/internal/config"
-	"github.com/crowdstrike/falcon-cli/pkg/cmd/factory"
 	"github.com/crowdstrike/falcon-cli/pkg/cmd/root"
+	"github.com/crowdstrike/falcon-cli/pkg/config"
+	"github.com/crowdstrike/falcon-cli/pkg/factory"
 	"github.com/crowdstrike/falcon-cli/pkg/utils"
 	"github.com/crowdstrike/falcon-cli/pkg/version"
 	"github.com/spf13/cobra"
@@ -97,6 +97,7 @@ func initConfig(cmd *cobra.Command) error {
 
 	v.SetEnvPrefix("falcon")
 	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	v.AutomaticEnv()
 
 	return bindFlags(cmd, v)
 }

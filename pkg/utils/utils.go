@@ -38,6 +38,7 @@ func ValidateRegExp(regex string, value string) bool {
 }
 
 func ConfigExists(path string) {
+	path = filepath.Clean(path)
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		err = os.MkdirAll(filepath.Dir(path), 0700)
 		if err != nil {
