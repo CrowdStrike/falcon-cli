@@ -1,0 +1,31 @@
+project_name: falcon
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    binary: falcon
+    main: ./cmd/falcon/main.go
+    ldflags:
+      - -s -w -X github.com/crowdstrike/falcon-cli/internal/build.Version={{.Version}} -X github.com/crowdstrike/falcon-cli/internal/build.Commit={{.Commit}} -X github.com/crowdstrike/falcon-cli/internal/build.Date={{.Date}}
+    goos:
+      - linux
+      - windows
+      - darwin
+archives:
+  - id: nix
+    builds: [macos, linux]
+    <<: &archive_defaults
+      name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    wrap_in_directory: true
+    replacements:
+      darwin: macOS
+    format: tar.gz
+    files:
+      - LICENSE
+  - id: windows
+    builds: [windows]
+    <<: *archive_defaults
+    wrap_in_directory: false
+    format: zip
+    files:
+      - LICENSE

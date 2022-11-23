@@ -21,7 +21,8 @@
 package sensor
 
 import (
-	"github.com/crowdstrike/falcon-cli/pkg/cmd/sensor/download"
+	downloadCmd "github.com/crowdstrike/falcon-cli/pkg/cmd/sensor/download"
+	"github.com/crowdstrike/falcon-cli/pkg/utils"
 	"github.com/spf13/cobra"
 	"k8s.io/kubectl/pkg/util/templates"
 )
@@ -35,8 +36,8 @@ var (
     `)
 )
 
-// versionCmd represents the version command
-func SensorCmd() *cobra.Command {
+// NewCmdSensor represents the sensor command
+func NewSensorCmd(f *utils.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "sensor",
 		Short:   shortDesc,
@@ -45,7 +46,7 @@ func SensorCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		download.DownloadCmd(),
+		downloadCmd.NewCmdDownload(f),
 	)
 	return cmd
 }

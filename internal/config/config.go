@@ -18,20 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package api
+package config
 
 import (
 	"context"
 	"fmt"
-	"log"
 
-	"github.com/crowdstrike/falcon-cli/pkg/utils"
 	"github.com/crowdstrike/falcon-cli/pkg/version"
-	falconapi "github.com/crowdstrike/gofalcon/falcon"
-	falconclient "github.com/crowdstrike/gofalcon/falcon/client"
+	"github.com/crowdstrike/gofalcon/falcon"
 	"github.com/spf13/viper"
 )
 
+// Struct to hold persistent configuration for falcon
 type Config struct {
 	// The Falcon Customer ID
 	CID string `yaml:"cid,omitempty"`
@@ -47,43 +45,46 @@ type Config struct {
 	OauthToken string `yaml:"oauth_token,omitempty"`
 	// The Container Registry OAuth token returned from the Falcon API.
 	RegistryToken string `yaml:"registry_token,omitempty"`
+	// The Profile to use for the CLI
+	Profile string `yaml:"profile,omitempty"`
 }
 
-func (c Config) GetConfig() Config {
-	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalf("Error reading config file, %s", err)
-	} else {
-		utils.ConfigFile = viper.ConfigFileUsed()
-		c = Config{
-			ClientID:     viper.GetString("client_id"),
-			ClientSecret: viper.GetString("client_secret"),
-			CID:          viper.GetString("cid"),
-			MemberCID:    viper.GetString("member_cid"),
-			Cloud:        viper.GetString("cloud"),
-		}
+var ConfigFile string
 
-		if c.Cloud == "" {
-			c.Cloud = "autodiscover"
-		}
+func NewConfig() (Config, error) {
+	c := &Config{}
+
+	if c.Cloud == "" {
+		c.Cloud = "autodiscover"
 	}
 
-	return c
+	profile := viper.GetViper().GetString("profile")
+
+	c.CID = getViperKey("cid", profile)
+	c.ClientID = getViperKey("client_id", profile)
+	c.ClientSecret = getViperKey("client_secret", profile)
+	c.MemberCID = getViperKey("member_cid", profile)
+	c.Cloud = getViperKey("cloud", profile)
+
+	return *c, nil
 }
 
-func Client() *falconclient.CrowdStrikeAPISpecification {
-	apiCfg := Config{}
-	c := apiCfg.GetConfig()
-	client, err := falconapi.NewClient(&falconapi.ApiConfig{
+func (c Config) ApiConfig(appVersion string) *falcon.ApiConfig {
+	return &falcon.ApiConfig{
 		ClientId:          c.ClientID,
 		ClientSecret:      c.ClientSecret,
 		MemberCID:         c.MemberCID,
-		Cloud:             falconapi.Cloud(c.Cloud),
+		Cloud:             falcon.Cloud(c.Cloud),
 		Context:           context.Background(),
 		UserAgentOverride: fmt.Sprintf("falcon-cli/%s", version.Version),
-	})
-	if err != nil {
-		log.Fatal(err)
+	}
+}
+
+func getViperKey(key string, profile string) string {
+	if profile == "" {
+		return key
 	}
 
-	return client
+	profileKey := fmt.Sprintf("%s.%s", profile, key)
+	return viper.GetViper().GetString(profileKey)
 }
