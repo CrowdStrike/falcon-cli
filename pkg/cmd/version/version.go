@@ -23,7 +23,7 @@ package version
 import (
 	"fmt"
 
-	"github.com/crowdstrike/falcon-cli/pkg/utils"
+	"github.com/crowdstrike/falcon-cli/pkg/factory"
 	"github.com/crowdstrike/falcon-cli/pkg/version"
 	"github.com/spf13/cobra"
 	"k8s.io/kubectl/pkg/util/templates"
@@ -38,7 +38,7 @@ var (
     `)
 )
 
-func NewCmdVersion(f *utils.Factory) *cobra.Command {
+func NewCmdVersion(f *factory.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "version",
 		Short:   shortDesc,
@@ -52,7 +52,7 @@ func NewCmdVersion(f *utils.Factory) *cobra.Command {
 	return cmd
 }
 
-func runVer(f *utils.Factory) func(cmd *cobra.Command, args []string) error {
+func runVer(f *factory.Factory) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		fmt.Fprint(f.IOStreams.Out, version.VersionString())
 		return nil

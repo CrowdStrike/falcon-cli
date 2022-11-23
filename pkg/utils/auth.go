@@ -21,7 +21,7 @@
 package utils
 
 import (
-	"github.com/crowdstrike/falcon-cli/internal/config"
+	"github.com/crowdstrike/falcon-cli/pkg/config"
 	"github.com/spf13/cobra"
 )
 

@@ -25,12 +25,15 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/MakeNowJust/heredoc"
-	"github.com/crowdstrike/falcon-cli/internal/config"
+	"github.com/crowdstrike/falcon-cli/pkg/config"
+	"github.com/crowdstrike/falcon-cli/pkg/factory"
 	"github.com/crowdstrike/falcon-cli/pkg/iostreams"
 	"github.com/crowdstrike/falcon-cli/pkg/utils"
 	"github.com/spf13/cobra"
 	"k8s.io/kubectl/pkg/util/templates"
 )
+
+var falconClouds = []string{"autodiscover", "us-1", "us-2", "eu-1", "us-gov-1"}
 
 type ConfigOptions struct {
 	IO          *iostreams.IOStreams
@@ -40,7 +43,7 @@ type ConfigOptions struct {
 	Selector string
 }
 
-func NewCmdConfig(f *utils.Factory) *cobra.Command {
+func NewCmdConfig(f *factory.Factory) *cobra.Command {
 	opts := &ConfigOptions{
 		IO: f.IOStreams,
 	}
@@ -85,33 +88,34 @@ func configRun(opts *ConfigOptions) error {
 		{
 			Name: "clientId",
 			Prompt: &survey.Password{
-				Message: "Enter your CrowdStrike API Client ID",
+				Message: "Enter your CrowdStrike API Client ID:",
 			},
 		},
 		{
 			Name: "clientSecret",
 			Prompt: &survey.Password{
-				Message: "Enter your CrowdStrike API Client Secret",
+				Message: "Enter your CrowdStrike API Client Secret:",
 			},
 		},
 		{
 			Name: "cid",
 			Prompt: &survey.Input{
-				Message: "Enter your CrowdStrike Customer ID (CID)",
+				Message: "Enter your CrowdStrike Customer ID (CID):",
 			},
 		},
 		{
 			Name: "memberCid",
 			Prompt: &survey.Input{
-				Message: "Enter your CrowdStrike Member CID",
+				Message: "Enter your CrowdStrike Member CID:",
 			},
 		},
 		{
 			// TODO: Should store valid options somewhere else perhaps use gofalcon
 			Name: "cloud",
 			Prompt: &survey.Select{
-				Message: "Select your CrowdStrike Cloud",
-				Options: []string{"us-1", "us-2", "eu-1"},
+				Message: "Select your CrowdStrike Cloud:",
+				Options: falconClouds,
+				Default: "autodiscover",
 			},
 		},
 	}

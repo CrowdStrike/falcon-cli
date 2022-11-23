@@ -23,15 +23,21 @@ import (
 	"os"
 	"strings"
 
-	"github.com/crowdstrike/falcon-cli/internal/config"
+	"github.com/crowdstrike/falcon-cli/pkg/config"
 	"github.com/crowdstrike/falcon-cli/pkg/iostreams"
-	"github.com/crowdstrike/falcon-cli/pkg/utils"
 	"github.com/crowdstrike/gofalcon/falcon"
 	"github.com/crowdstrike/gofalcon/falcon/client"
 )
 
-func New(appVersion string) *utils.Factory {
-	f := &utils.Factory{
+type Factory struct {
+	IOStreams *iostreams.IOStreams
+
+	Config       func() (config.Config, error)
+	FalconClient func() (*client.CrowdStrikeAPISpecification, error)
+}
+
+func New(appVersion string) *Factory {
+	f := &Factory{
 		Config: configFunc(),
 	}
 
@@ -49,7 +55,7 @@ func configFunc() func() (config.Config, error) {
 
 }
 
-func falconClientFunc(f *utils.Factory, appVersion string) func() (*client.CrowdStrikeAPISpecification, error) {
+func falconClientFunc(f *Factory, appVersion string) func() (*client.CrowdStrikeAPISpecification, error) {
 	return func() (*client.CrowdStrikeAPISpecification, error) {
 		cfg, err := f.Config()
 
@@ -62,7 +68,7 @@ func falconClientFunc(f *utils.Factory, appVersion string) func() (*client.Crowd
 	}
 }
 
-func ioStreams(f *utils.Factory) *iostreams.IOStreams {
+func ioStreams(f *Factory) *iostreams.IOStreams {
 	i := &iostreams.IOStreams{}
 	io := i.NewIOStreams()
 

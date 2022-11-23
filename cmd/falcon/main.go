@@ -21,16 +21,16 @@
 package main
 
 import (
-	"fmt"
 	"os"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/crowdstrike/falcon-cli/pkg/cli"
 )
 
 func main() {
 	if err := cli.Run(); err != nil {
-		fmt.Printf("Error: %s", err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 	os.Exit(0)
 }
