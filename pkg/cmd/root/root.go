@@ -45,15 +45,12 @@ var (
 )
 
 type RootOptions struct {
-	IO      *iostreams.IOStreams
-	Config  config.Config
-	Version bool
+	IO     *iostreams.IOStreams
+	Config config.Config
 }
 
 // NewCmdRoot represents the base command when called without any subcommands
 func NewCmdRoot(f *factory.Factory, version string) *cobra.Command {
-	opts := &RootOptions{}
-
 	cmd := &cobra.Command{
 		Use:   "falcon <command> <subcommand> [flags]",
 		Short: shortDesc,
@@ -74,7 +71,8 @@ func NewCmdRoot(f *factory.Factory, version string) *cobra.Command {
 	}
 
 	cmd.PersistentFlags().String("config", "", "config file (default is $HOME/.falcon/falcon.yaml)")
-	cmd.PersistentFlags().BoolVar(&opts.Version, "version", false, "Show version")
+	cmd.PersistentFlags().Bool("verbose", false, "Enable verbose logging")
+	cmd.PersistentFlags().Bool("version", false, "Show version")
 	cmd.PersistentFlags().Bool("help", false, "Show help for command")
 	cmd.PersistentFlags().StringP("cid", "f", "", "The Falcon Customer ID (CID)")
 	cmd.PersistentFlags().StringP("client-id", "u", "", "The Falcon API Oauth client ID")
