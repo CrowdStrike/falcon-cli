@@ -21,6 +21,7 @@
 package download
 
 import (
+	"github.com/crowdstrike/falcon-cli/pkg/utils"
 	"github.com/spf13/cobra"
 	"k8s.io/kubectl/pkg/util/templates"
 )
@@ -34,8 +35,8 @@ var (
     `)
 )
 
-// versionCmd represents the version command
-func DownloadCmd() *cobra.Command {
+// NewCmdDownload represents the download command
+func NewCmdDownload(f *utils.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "download",
 		Short:   shortDesc,
@@ -47,6 +48,5 @@ func DownloadCmd() *cobra.Command {
 }
 
 func runDownload(cmd *cobra.Command, args []string) error {
-
 	return nil
 }

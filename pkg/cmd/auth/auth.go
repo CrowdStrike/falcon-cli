@@ -18,19 +18,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package main
+package auth
 
 import (
-	"fmt"
-	"os"
+	"github.com/crowdstrike/falcon-cli/pkg/utils"
+	"github.com/spf13/cobra"
+	"k8s.io/kubectl/pkg/util/templates"
 
-	"github.com/crowdstrike/falcon-cli/pkg/cli"
+	authConfigCmd "github.com/crowdstrike/falcon-cli/pkg/cmd/auth/config"
 )
 
-func main() {
-	if err := cli.Run(); err != nil {
-		fmt.Printf("Error: %s", err)
-		os.Exit(1)
+var (
+	longDescAuth = templates.LongDesc(`Initialize the Falcon CLI tool`)
+	examplesAuth = templates.Examples(`
+	    # Initialize the CrowdStrike Falcon CLI tool
+	    falcon init
+		
+		# Initialize the CrowdStrike Falcon CLI tool with defining OAuth2 client ID and secret
+		falcon init --client-id <client_id> --client-secret <client_secret>
+    `)
+)
+
+func NewAuthCmd(f *utils.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "auth <command>",
+		Short:   "Authenticate falcon CLI with CrowdStrike Falcon API",
+		Long:    longDescAuth,
+		Example: examplesAuth,
 	}
-	os.Exit(0)
+
+	// Add subcommands
+	cmd.AddCommand(authConfigCmd.NewCmdConfig(f))
+
+	return cmd
 }

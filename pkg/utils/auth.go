@@ -18,19 +18,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package main
+package utils
 
 import (
-	"fmt"
-	"os"
-
-	"github.com/crowdstrike/falcon-cli/pkg/cli"
+	"github.com/crowdstrike/falcon-cli/internal/config"
+	"github.com/spf13/cobra"
 )
 
-func main() {
-	if err := cli.Run(); err != nil {
-		fmt.Printf("Error: %s", err)
-		os.Exit(1)
+// CheckAuth checks if required authentication is configured
+func CheckAuth(cfg config.Config) bool {
+	// Verify required variables are set
+	if cfg.ClientID == "" || cfg.ClientSecret == "" {
+		return false
 	}
-	os.Exit(0)
+	return true
+}
+
+// DisableAuthCheck disables the auth check for a command
+func DisableAuthCheck(cmd *cobra.Command) {
+	if cmd.Annotations == nil {
+		cmd.Annotations = map[string]string{}
+	}
+
+	cmd.Annotations["skipAuthCheck"] = "true"
+}
+
+// IsAuthCheckEnabled checks if the auth check is enabled for a command
+func IsAuthCheckEnabled(cmd *cobra.Command) bool {
+	switch cmd.Name() {
+	case "help", cobra.ShellCompRequestCmd, cobra.ShellCompNoDescRequestCmd, "falcon":
+		return false
+	}
+
+	for c := cmd; c.Parent() != nil; c = c.Parent() {
+		if c.Annotations != nil && c.Annotations["skipAuthCheck"] == "true" {
+			return false
+		}
+	}
+
+	return true
 }

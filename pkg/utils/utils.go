@@ -29,8 +29,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var ConfigFile string
-
 func ValidateRegExp(regex string, value string) bool {
 	if ok, _ := regexp.MatchString(regex, value); !ok {
 		return false
