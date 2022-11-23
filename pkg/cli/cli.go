@@ -22,9 +22,10 @@ package cli
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/crowdstrike/falcon-cli/pkg/cmd/root"
@@ -50,7 +51,6 @@ func Run() error {
 
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
 		err := initConfig(cmd)
-
 		if err != nil {
 			return err
 		}
@@ -58,10 +58,25 @@ func Run() error {
 		if err = viper.GetViper().BindPFlags(cmd.PersistentFlags()); err != nil {
 			log.Fatalf("Error binding flags to viper: %v", err)
 		}
+
 		//Do auth check if the command requires authentication
 		if utils.IsAuthCheckEnabled(cmd) && !utils.CheckAuth(cfg) {
 			return fmt.Errorf(authHelp())
 		}
+
+		formatter := &log.TextFormatter{}
+		formatter.TimestampFormat = "2006-01-02 15:04:05"
+		formatter.FullTimestamp = true
+		formatter.DisableLevelTruncation = true
+		formatter.DisableColors = false
+		formatter.ForceColors = true
+		log.SetFormatter(formatter)
+
+		if viper.GetBool("verbose") {
+			log.SetLevel(log.DebugLevel)
+			log.Debug("Debug logging is set")
+		}
+
 		return nil
 	}
 
@@ -70,13 +85,11 @@ func Run() error {
 
 func initConfig(cmd *cobra.Command) error {
 	v := viper.GetViper()
-
 	cfgFile := v.GetString("config")
 
 	if cfgFile != "" {
 		// Use config file from the flag.
 		v.SetConfigFile(cfgFile)
-		config.ConfigFile = cfgFile
 	} else {
 		// Find home directory.
 		home, err := os.UserHomeDir()
@@ -94,6 +107,8 @@ func initConfig(cmd *cobra.Command) error {
 			return fmt.Errorf("Error reading config file: %v", err)
 		}
 	}
+
+	config.ConfigFile = v.ConfigFileUsed()
 
 	v.SetEnvPrefix("falcon")
 	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
