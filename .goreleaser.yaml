@@ -1,4 +1,4 @@
-project_name: falcon
+project_name: falcon-cli
 
 builds:
   - env:
@@ -6,26 +6,51 @@ builds:
     binary: falcon
     main: ./cmd/falcon/main.go
     ldflags:
-      - -s -w -X github.com/crowdstrike/falcon-cli/internal/build.Version={{.Version}} -X github.com/crowdstrike/falcon-cli/internal/build.Commit={{.Commit}} -X github.com/crowdstrike/falcon-cli/internal/build.Date={{.Date}}
+      - -s -w -X github.com/crowdstrike/falcon-cli/pkg/version.Version={{.Version}} -X github.com/crowdstrike/falcon-cli/pkg/version.GitVersion={{.Version}} -X github.com/crowdstrike/falcon-cli/pkg/version.GitCommit={{.Commit}}
     goos:
       - linux
       - windows
       - darwin
 archives:
-  - id: nix
-    builds: [macos, linux]
-    <<: &archive_defaults
-      name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
-    wrap_in_directory: true
-    replacements:
+  - replacements:
       darwin: macOS
-    format: tar.gz
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+    format_overrides:
+      - goos: windows
+        format: zip
     files:
       - LICENSE
-  - id: windows
-    builds: [windows]
-    <<: *archive_defaults
-    wrap_in_directory: false
-    format: zip
-    files:
-      - LICENSE
+      - dist/CHANGELOG.md
+checksum:
+  name_template: "checksums.txt"
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+nfpms:
+  - package_name: falcon-cli
+    file_name_template: "{{ .PackageName }}-{{ .Version }}-{{ .Release}}.{{ .Arch }}"
+    replacements:
+      amd64: x86_64
+      arm64: aarch64
+      386: i386
+    vendor: CrowdStrike Inc.
+    homepage: https://crowdstrike.com/
+    maintainer: cloud-integrations@crowdstrike.com
+    description: |-
+      The CrowdStrike Falcon CLI allows you to work effortlessly with the CrowdStrike Falcon platform.
+    license: MIT
+    release: "1"
+    formats:
+      - deb
+      - rpm
+      - archlinux
+    rpm:
+      summary: The CrowdStrike Falcon CLI tool
