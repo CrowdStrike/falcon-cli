@@ -1,21 +1,44 @@
 project_name: falcon-cli
 
+env:
+  - CGO_ENABLED=0
+  - GO111MODULE=on
+  - REPO=github.com/crowdstrike/falcon-cli
+
 builds:
   - env:
       - CGO_ENABLED=0
     binary: falcon
     main: ./cmd/falcon/main.go
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    asmflags:
+      - all=-trimpath={{ .Env.PWD }}
+    gcflags:
+      - all=-trimpath={{ .Env.PWD }}
     ldflags:
-      - -s -w -X github.com/crowdstrike/falcon-cli/pkg/version.Version={{.Version}} -X github.com/crowdstrike/falcon-cli/pkg/version.GitVersion={{.Version}} -X github.com/crowdstrike/falcon-cli/pkg/version.GitCommit={{.Commit}}
-    goos:
-      - linux
-      - windows
-      - darwin
+      - -s -w
+      - -X {{ .Env.REPO }}/pkg/version.Version={{ .Version }}
+      - -X {{ .Env.REPO }}/pkg/version.GitVersion={{ .Tag }}
+      - -X {{ .Env.REPO }}/pkg/version.GitCommit={{ .Commit }}
+    targets:
+      - darwin_amd64
+      - darwin_arm64
+      - linux_amd64
+      - linux_arm64
+      - linux_ppc64le
+      - linux_s390x
+      - windows_amd64
+      - windows_arm64
 archives:
-  - replacements:
+  - id: binaries
+    format: binary
+    name_template: "{{ .Binary }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
+  - id: archives
+    name_template: "{{ .Binary }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
+    replacements:
       darwin: macOS
-      linux: Linux
-      windows: Windows
+      linux: linux
+      windows: windows
       386: i386
       amd64: x86_64
     format_overrides:
@@ -27,7 +50,7 @@ archives:
 checksum:
   name_template: "checksums.txt"
 snapshot:
-  name_template: "{{ incpatch .Version }}-next"
+  name_template: "{{ .Version }}"
 changelog:
   sort: asc
   filters:
@@ -36,7 +59,7 @@ changelog:
       - "^test:"
 nfpms:
   - package_name: falcon-cli
-    file_name_template: "{{ .PackageName }}-{{ .Version }}-{{ .Release}}.{{ .Arch }}"
+    file_name_template: "{{ .PackageName }}-{{ .Major }}.{{ .Minor }}.{{ .Patch }}-{{ .Release}}.{{ .Arch }}"
     replacements:
       amd64: x86_64
       arm64: aarch64
