@@ -29,5 +29,6 @@ jobs:
         with:
           args: release --clean
         env:
-          # GitHub sets the GITHUB_TOKEN secret automatically.
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use a PAT with repo scope — required when publishing releases from a fork,
+          # because GITHUB_TOKEN lacks permission to create releases in the upstream repo.
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
