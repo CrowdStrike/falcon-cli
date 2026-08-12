@@ -49,7 +49,7 @@ type RootOptions struct {
 	Config config.Config
 }
 
-// NewCmdRoot represents the base command when called without any subcommands
+// NewCmdRoot represents the base command when called without any subcommands.
 func NewCmdRoot(f *factory.Factory, version string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "falcon <command> <subcommand> [flags]",

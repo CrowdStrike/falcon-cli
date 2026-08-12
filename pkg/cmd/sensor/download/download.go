@@ -35,7 +35,7 @@ var (
     `)
 )
 
-// NewCmdDownload represents the download command
+// NewCmdDownload represents the download command.
 func NewCmdDownload(f *factory.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "download",

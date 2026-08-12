@@ -29,7 +29,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Struct to hold persistent configuration for falcon
+// Config holds persistent configuration for falcon.
 type Config struct {
 	// The Falcon Customer ID
 	CID string `yaml:"cid,omitempty"`

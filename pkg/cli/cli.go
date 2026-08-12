@@ -21,6 +21,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -61,7 +62,7 @@ func Run() error {
 
 		//Do auth check if the command requires authentication
 		if utils.IsAuthCheckEnabled(cmd) && !utils.CheckAuth(cfg) {
-			return fmt.Errorf(authHelp())
+			return errors.New(authHelp())
 		}
 
 		formatter := &log.TextFormatter{}
@@ -104,7 +105,7 @@ func initConfig(cmd *cobra.Command) error {
 
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			return fmt.Errorf("Error reading config file: %v", err)
+			return fmt.Errorf("reading config file: %w", err)
 		}
 	}
 
@@ -117,7 +118,7 @@ func initConfig(cmd *cobra.Command) error {
 	return bindFlags(cmd, v)
 }
 
-// bindFlags binds the flags to the viper config
+// bindFlags binds the flags to the viper config.
 func bindFlags(cmd *cobra.Command, v *viper.Viper) error {
 	err := v.BindPFlag("profile", cmd.Flags().Lookup("profile"))
 	if err != nil {

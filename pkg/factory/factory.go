@@ -42,7 +42,7 @@ func New(appVersion string) *Factory {
 	}
 
 	f.FalconClient = falconClientFunc(f, appVersion) // Depends on Config
-	f.IOStreams = ioStreams(f)
+	f.IOStreams = ioStreams()
 
 	return f
 }
@@ -68,7 +68,7 @@ func falconClientFunc(f *Factory, appVersion string) func() (*client.CrowdStrike
 	}
 }
 
-func ioStreams(f *Factory) *iostreams.IOStreams {
+func ioStreams() *iostreams.IOStreams {
 	i := &iostreams.IOStreams{}
 	io := i.NewIOStreams()
 

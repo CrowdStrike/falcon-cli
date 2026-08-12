@@ -36,7 +36,7 @@ var (
     `)
 )
 
-// NewCmdSensor represents the sensor command
+// NewCmdSensor represents the sensor command.
 func NewSensorCmd(f *factory.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "sensor",

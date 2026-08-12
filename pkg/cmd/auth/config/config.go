@@ -21,7 +21,7 @@
 package config
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/MakeNowJust/heredoc"
@@ -68,7 +68,7 @@ func NewCmdConfig(f *factory.Factory) *cobra.Command {
 			}
 
 			if !opts.IO.CanPrompt() {
-				return fmt.Errorf(heredoc.Doc(`
+				return errors.New(heredoc.Doc(`
 				 Interactive mode is disabled in this terminal.
 
 				 Please run this command in an interactive terminal.
