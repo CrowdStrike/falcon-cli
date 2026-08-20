@@ -29,11 +29,11 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/MakeNowJust/heredoc"
+	"github.com/crowdstrike/falcon-cli/internal/version"
 	"github.com/crowdstrike/falcon-cli/pkg/cmd/root"
 	"github.com/crowdstrike/falcon-cli/pkg/config"
 	"github.com/crowdstrike/falcon-cli/pkg/factory"
 	"github.com/crowdstrike/falcon-cli/pkg/utils"
-	"github.com/crowdstrike/falcon-cli/pkg/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"

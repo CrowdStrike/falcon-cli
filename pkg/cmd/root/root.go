@@ -23,6 +23,7 @@ package root
 import (
 	"fmt"
 
+	"github.com/crowdstrike/falcon-cli/internal/version"
 	"github.com/crowdstrike/falcon-cli/pkg/cmd/auth"
 	"github.com/crowdstrike/falcon-cli/pkg/cmd/fcs"
 	"github.com/crowdstrike/falcon-cli/pkg/cmd/sensor"
@@ -31,7 +32,6 @@ import (
 	"github.com/crowdstrike/falcon-cli/pkg/factory"
 	"github.com/crowdstrike/falcon-cli/pkg/iostreams"
 	"github.com/crowdstrike/falcon-cli/pkg/utils"
-	"github.com/crowdstrike/falcon-cli/pkg/version"
 	"github.com/spf13/cobra"
 	"k8s.io/kubectl/pkg/util/templates"
 )
@@ -96,7 +96,7 @@ func NewCmdRoot(f *factory.Factory, _ string) *cobra.Command {
 
 func runRoot(cmd *cobra.Command, opts *Options) error {
 	if cmd.Flags().Changed("version") {
-		_, err := fmt.Fprint(opts.IO.Out, version.String())
+		_, err := fmt.Fprint(opts.IO.Out, version.Version)
 		return err
 	}
 

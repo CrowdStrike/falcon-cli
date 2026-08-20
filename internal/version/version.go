@@ -20,24 +20,8 @@
 
 package version
 
-import (
-	"fmt"
-	"runtime"
-	"testing"
+// Version is the release version; overridden via -ldflags at build time.
+var Version = "0.0.0+dev"
 
-	"github.com/google/go-cmp/cmp"
-)
-
-func TestVersion(t *testing.T) {
-	Version = "1.2.3"
-	GitVersion = "4.5.6"
-	GitCommit = "7.8.9"
-	got := String()
-	want := fmt.Sprintf("falcon version: %q, commit: %q, go version: %q, GOOS: %q, GOARCH: %q",
-		"4.5.6", "7.8.9", runtime.Version(), runtime.GOOS, runtime.GOARCH)
-
-	if diff := cmp.Diff(want, got); diff != "" {
-		t.Errorf("String() mismatch (-want +got):\n%s", diff)
-	}
-
-}
+// Commit is the git commit the binary was built from; overridden via -ldflags.
+var Commit = "unknown"

@@ -25,7 +25,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/crowdstrike/falcon-cli/pkg/version"
+	"github.com/crowdstrike/falcon-cli/internal/version"
 	"github.com/crowdstrike/gofalcon/falcon"
 	"github.com/spf13/viper"
 )
