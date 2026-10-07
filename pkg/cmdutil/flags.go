@@ -56,7 +56,7 @@ func AddSortFlag(cmd *cobra.Command, p *string) {
 
 // AddOutputFlag adds an --output flag (table|json|jsonl|toon).
 func AddOutputFlag(cmd *cobra.Command, p *string) {
-	cmd.Flags().StringVar(p, "output", "table", "Output format: table, json, jsonl, or toon (compact, LLM-friendly)")
+	cmd.Flags().StringVar(p, "output", "table", "Output format: table, json, jsonl, or toon")
 }
 
 // AddIDsFlag adds an --ids flag for multi-ID commands.
