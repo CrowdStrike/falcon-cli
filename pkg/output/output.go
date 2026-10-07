@@ -32,6 +32,7 @@ const (
 	FormatTable Format = "table"
 	FormatJSON  Format = "json"
 	FormatJSONL Format = "jsonl"
+	FormatTOON  Format = "toon"
 )
 
 // TableDefinition describes how to render a slice of items as a table.
@@ -84,6 +85,8 @@ func NewPrinter(format Format, def *TableDefinition, tableOpts ...*TableOptions)
 		return &jsonPrinter{}
 	case FormatJSONL:
 		return &jsonlPrinter{}
+	case FormatTOON:
+		return &toonPrinter{}
 	default:
 		return &tablePrinter{def: def, opts: opts}
 	}
