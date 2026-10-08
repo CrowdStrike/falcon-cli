@@ -4,7 +4,7 @@ A command-line interface for working with the CrowdStrike Falcon platform.
 
 ## Description
 
-The CrowdStrike Falcon CLI provides terminal access to Falcon platform APIs. It supports querying and managing cloud security posture (assets, risks, misconfigurations, compliance, Kubernetes resources, IaC scanning, vulnerabilities, and suppression rules), downloading the Falcon sensor, and authenticating across multiple Falcon clouds and tenants.
+The CrowdStrike Falcon CLI provides terminal access to Falcon platform APIs. It supports querying and managing cloud security posture (assets, risks, misconfigurations, compliance, Kubernetes resources, IaC scanning, vulnerabilities, and suppression rules), and authenticating across multiple Falcon clouds and tenants.
 
 Credentials are stored in `~/.falcon/config.yaml` with named profile support. Environment variables prefixed with `FALCON_` are also supported.
 
@@ -31,9 +31,6 @@ falcon fcs risks list
 
 # List Kubernetes clusters
 falcon fcs kubernetes clusters
-
-# Download the Falcon sensor
-falcon sensor download
 ```
 
 ## Installation

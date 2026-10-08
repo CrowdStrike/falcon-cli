@@ -26,7 +26,6 @@ import (
 	"github.com/crowdstrike/falcon-cli/internal/version"
 	"github.com/crowdstrike/falcon-cli/pkg/cmd/auth"
 	"github.com/crowdstrike/falcon-cli/pkg/cmd/fcs"
-	"github.com/crowdstrike/falcon-cli/pkg/cmd/sensor"
 	versionCmd "github.com/crowdstrike/falcon-cli/pkg/cmd/version"
 	"github.com/crowdstrike/falcon-cli/pkg/config"
 	"github.com/crowdstrike/falcon-cli/pkg/factory"
@@ -85,7 +84,6 @@ func NewCmdRoot(f *factory.Factory, _ string) *cobra.Command {
 
 	// Add subcommands
 	cmd.AddCommand(versionCmd.NewCmdVersion(f))
-	cmd.AddCommand(sensor.NewSensorCmd(f))
 	cmd.AddCommand(auth.NewAuthCmd(f))
 	cmd.AddCommand(fcs.NewFCSCmd(f))
 
