@@ -1,0 +1,9 @@
+#!/bin/sh
+# Link the CLI onto the default PATH. The payload installs to its own
+# directory rather than /usr/local/bin because Installer applies a payload's
+# ownership to the directories it contains, and on Intel Macs Homebrew expects
+# the user to own /usr/local/bin.
+set -e
+
+mkdir -p "$3/usr/local/bin"
+ln -sf /usr/local/falcon-cli/falcon "$3/usr/local/bin/falcon"

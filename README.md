@@ -38,7 +38,58 @@ falcon sensor download
 
 ## Installation
 
-Download pre-built binaries for your platform from the [Releases](https://github.com/CrowdStrike/falcon-cli/releases) page. Builds are available for Linux, macOS, and Windows on amd64 and arm64.
+Download a package for your platform from the [Releases](https://github.com/CrowdStrike/falcon-cli/releases) page:
+
+| Platform | Package |
+|---|---|
+| Debian, Ubuntu | `falcon-cli_<version>-1_<arch>.deb` (`amd64`, `arm64`, `s390x`, `ppc64el`) |
+| RHEL, Fedora | `falcon-cli-<version>-1.<arch>.rpm` (`x86_64`, `aarch64`, `s390x`, `ppc64le`) |
+| macOS | `falcon-cli-<version>-macos-universal.pkg` (Intel and Apple silicon) |
+| Windows | `falcon-cli-<version>-windows-<arch>.msi` (`x86_64`, `arm64`) |
+
+Each release also has `.tar.gz` and `.zip` archives and plain binaries. `checksums.txt` lists the SHA-256 of the archives, binaries, and Linux packages; the macOS and Windows installers each have a `.sha256` file.
+
+### Linux
+
+```bash
+sudo apt install ./falcon-cli_<version>-1_amd64.deb    # Debian, Ubuntu
+sudo dnf install ./falcon-cli-<version>-1.x86_64.rpm   # RHEL, Fedora
+```
+
+To remove it, run `sudo apt remove falcon-cli` or `sudo dnf remove falcon-cli`.
+
+### macOS
+
+The pkg installs `falcon` to `/usr/local/falcon-cli` and links it into `/usr/local/bin`.
+
+The pkg is not signed yet, so macOS blocks it if you downloaded it with a browser. To install it anyway:
+
+1. Open the pkg, then click **Done** in the warning.
+2. Open **System Settings** > **Privacy & Security**, scroll down to **Security**, and click **Open Anyway** next to the message about the pkg.
+3. Confirm, and enter your password when asked.
+
+Files downloaded with `curl` are not quarantined, so you can also install from a terminal without the warning:
+
+```bash
+curl -LO https://github.com/CrowdStrike/falcon-cli/releases/download/v<version>/falcon-cli-<version>-macos-universal.pkg
+sudo installer -pkg falcon-cli-<version>-macos-universal.pkg -target /
+```
+
+macOS has no uninstaller for packages. To remove the CLI:
+
+```bash
+sudo rm /usr/local/bin/falcon
+sudo rm -rf /usr/local/falcon-cli
+sudo pkgutil --forget com.crowdstrike.falcon-cli
+```
+
+### Windows
+
+The MSI installs `falcon.exe` to `C:\Program Files\CrowdStrike\Falcon CLI` and adds that folder to the system `PATH`. Open a new terminal afterward so it picks up the new `PATH`.
+
+The MSI is not signed yet, so Microsoft Defender SmartScreen may warn you when you open it. Click **More info**, then **Run anyway**.
+
+To remove it, uninstall **CrowdStrike Falcon CLI** from **Settings** > **Apps** > **Installed apps**.
 
 ### Building from source
 
