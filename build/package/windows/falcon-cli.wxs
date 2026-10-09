@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Windows installer for the falcon CLI, built by the msi job in
+  .github/workflows/release.yml with WiX v5:
+
+    wix build falcon-cli.wxs -arch x64 -d Version=1.2.3 -d BinaryPath=C:\path\falcon.exe -o out.msi
+
+  Installs falcon.exe to "C:\Program Files\CrowdStrike\Falcon CLI" and appends
+  that folder to the machine PATH.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <!-- UpgradeCode must never change: new versions use it to find and replace old ones. -->
+  <Package
+      Name="CrowdStrike Falcon CLI"
+      Manufacturer="CrowdStrike, Inc."
+      Version="$(var.Version)"
+      UpgradeCode="68B0B190-0CC9-4F69-9BC0-C7445991A872"
+      Scope="perMachine">
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/CrowdStrike/falcon-cli" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/CrowdStrike/falcon-cli/issues" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="CompanyFolder" Name="CrowdStrike">
+        <Directory Id="INSTALLFOLDER" Name="Falcon CLI" />
+      </Directory>
+    </StandardDirectory>
+
+    <Feature Id="Main">
+      <Component Directory="INSTALLFOLDER">
+        <File Source="$(var.BinaryPath)" Name="falcon.exe" KeyPath="yes" />
+        <Environment
+            Id="PathEntry"
+            Name="PATH"
+            Value="[INSTALLFOLDER]"
+            Part="last"
+            Action="set"
+            System="yes"
+            Permanent="no" />
+      </Component>
+    </Feature>
+  </Package>
+</Wix>

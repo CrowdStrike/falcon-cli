@@ -1,6 +1,8 @@
 
 version: 2
 
+project_name: falcon-cli
+
 before:
   hooks:
     # You may remove this if you don't use go modules.
@@ -9,6 +11,7 @@ before:
 builds:
   - env:
       - CGO_ENABLED=0
+    binary: falcon
     mod_timestamp: '{{ .CommitTimestamp }}'
     flags:
       - -trimpath
@@ -62,6 +65,103 @@ archives:
       {{- if eq .Arch "amd64" }}x86_64
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
+
+nfpms:
+  - package_name: falcon-cli
+    # Per-format conventions: falcon-cli_1.2.3_amd64.deb, falcon-cli-1.2.3-1.x86_64.rpm
+    file_name_template: '{{ .ConventionalFileName }}'
+    vendor: CrowdStrike Inc.
+    homepage: https://crowdstrike.com/
+    maintainer: CrowdStrike <cloud-integrations@crowdstrike.com>
+    description: |-
+      The CrowdStrike Falcon CLI allows you to work effortlessly with the CrowdStrike Falcon platform.
+    license: MIT
+    release: "1"
+    formats:
+      - deb
+      - rpm
+    rpm:
+      summary: The CrowdStrike Falcon CLI tool
+
+# Package manager publishers, disabled until their target repos exist:
+# CrowdStrike/homebrew-tap, CrowdStrike/scoop-bucket, and a fork of
+# microsoft/winget-pkgs (owned by a bot account that can open the upstream PR).
+# Each pins ids to the tar.gz/zip archives so the raw "binary" archives are not
+# offered as a second artifact per platform. PACKAGE_REPOS_TOKEN needs write
+# access to those repos; the workflow GITHUB_TOKEN is scoped to this repo only.
+# Chocolatey is built by the chocolatey job in release.yml, since choco needs
+# a Windows runner.
+#
+# homebrew_casks:
+#   - name: falcon-cli
+#     ids:
+#       - archives
+#     binaries:
+#       - falcon
+#     homepage: https://github.com/CrowdStrike/falcon-cli
+#     description: CLI for the CrowdStrike Falcon platform
+#     license: MIT
+#     repository:
+#       owner: CrowdStrike
+#       name: homebrew-tap
+#       token: '{{ .Env.PACKAGE_REPOS_TOKEN }}'
+#     # The binary is not signed or notarized yet, so clear the quarantine
+#     # attribute Gatekeeper would otherwise use to block it. The cask also
+#     # covers Linux, which has no xattr.
+#     hooks:
+#       post:
+#         install: |
+#           if OS.mac?
+#             system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/falcon"]
+#           end
+
+# scoops:
+#   - name: falcon-cli
+#     ids:
+#       - archives
+#     homepage: https://github.com/CrowdStrike/falcon-cli
+#     description: CLI for the CrowdStrike Falcon platform
+#     license: MIT
+#     repository:
+#       owner: CrowdStrike
+#       name: scoop-bucket
+#       token: '{{ .Env.PACKAGE_REPOS_TOKEN }}'
+
+# winget:
+#   - name: FalconCLI
+#     publisher: CrowdStrike
+#     publisher_url: https://www.crowdstrike.com/
+#     short_description: CLI for the CrowdStrike Falcon platform
+#     description: The CrowdStrike Falcon CLI allows you to work effortlessly with the CrowdStrike Falcon platform.
+#     homepage: https://github.com/CrowdStrike/falcon-cli
+#     license: MIT
+#     license_url: https://github.com/CrowdStrike/falcon-cli/blob/main/LICENSE
+#     ids:
+#       - archives
+#     tags:
+#       - crowdstrike
+#       - falcon
+#       - cli
+#     # Pushes to a fork of winget-pkgs and opens a PR upstream. A failed PR is
+#     # logged but does not fail the release.
+#     repository:
+#       owner: CrowdStrike
+#       name: winget-pkgs
+#       branch: 'falcon-cli-{{ .Version }}'
+#       token: '{{ .Env.PACKAGE_REPOS_TOKEN }}'
+#       pull_request:
+#         enabled: true
+#         base:
+#           owner: microsoft
+#           name: winget-pkgs
+#           branch: master
+
+release:
+  # The release workflow runs on a release published in the UI, and GoReleaser
+  # overwrites the existing title with this template. RELEASE_NAME carries the
+  # UI title through; local runs, which leave it unset, fall back to the tag.
+  # Release notes are kept as written (the default release.mode).
+  name_template: '{{ envOrDefault "RELEASE_NAME" .Tag }}'
 
 checksum:
   name_template: checksums.txt

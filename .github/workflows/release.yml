@@ -1,9 +1,11 @@
 name: Release
 
+# Runs when a release is published in the UI; the jobs below attach assets to
+# it. This replaces a tag-push trigger, which would also fire when the UI
+# creates the tag and run the release twice.
 on:
-  push:
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
+  release:
+    types: [published]
 
 # Releases need permissions to read and write the repository contents.
 # GitHub considers creating releases and uploading assets as writing contents.
@@ -12,8 +14,18 @@ permissions:
 
 jobs:
   goreleaser:
+    # Prereleases get no assets or package pushes. The installer jobs need
+    # this job, so they are skipped too.
+    if: ${{ !github.event.release.prerelease }}
     runs-on: ubuntu-latest
     steps:
+      # Release events have no tag filter, so enforce the vX.Y.Z format here.
+      - name: Check tag
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::tag $TAG is not vX.Y.Z"; exit 1; }
+
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           # Allow goreleaser to access older tag information.
@@ -27,7 +39,180 @@ jobs:
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6.4.0
         with:
+          # Keep in step with GORELEASER_VERSION in the Makefile.
+          version: v2.18.2
           args: release --clean
         env:
           # GitHub sets the GITHUB_TOKEN secret automatically.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Keeps the title set in the UI; see release.name_template.
+          RELEASE_NAME: ${{ github.event.release.name }}
+          # Cross-repo token for the Homebrew tap, Scoop bucket, and winget-pkgs
+          # fork. Uncomment with the publishers in .goreleaser.yaml.
+          # PACKAGE_REPOS_TOKEN: ${{ secrets.PACKAGE_REPOS_TOKEN }}
+
+  # The installer jobs below build from the binaries GoReleaser just published,
+  # verified against its checksums.txt, and upload each installer with a
+  # .sha256 sidecar. Re-running a failed job replaces its assets.
+
+  msi:
+    needs: goreleaser
+    strategy:
+      matrix:
+        include:
+          - arch: x64
+            goarch: x86_64
+            runner: windows-latest
+          - arch: arm64
+            goarch: arm64
+            runner: windows-11-arm
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # WiX v6+ falls under the Open Source Maintenance Fee; v5 does not.
+      WIX_VERSION: 5.0.2
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Download binary
+        run: |
+          $version = $env:GITHUB_REF_NAME.TrimStart('v')
+          $exe = "falcon-cli-$version-windows-${{ matrix.goarch }}.exe"
+          gh release download $env:GITHUB_REF_NAME --pattern $exe --pattern checksums.txt
+          $expected = Get-Content checksums.txt |
+            Where-Object { $_ -match "\s$([regex]::Escape($exe))$" } |
+            ForEach-Object { ($_ -split '\s+')[0] }
+          $actual = (Get-FileHash $exe -Algorithm SHA256).Hash.ToLower()
+          if (-not $expected -or $actual -ne $expected) { throw "checksum mismatch for $exe" }
+          Move-Item $exe falcon.exe
+          "VERSION=$version" >> $env:GITHUB_ENV
+          "MSI=falcon-cli-$version-windows-${{ matrix.goarch }}.msi" >> $env:GITHUB_ENV
+
+      - name: Build MSI
+        run: |
+          dotnet tool install wix --version $env:WIX_VERSION --tool-path "$env:RUNNER_TEMP\wix"
+          & "$env:RUNNER_TEMP\wix\wix.exe" build build/package/windows/falcon-cli.wxs `
+            -arch ${{ matrix.arch }} `
+            -d Version=$env:VERSION `
+            -d BinaryPath="$PWD\falcon.exe" `
+            -o $env:MSI
+          if ($LASTEXITCODE -ne 0) { throw "wix build exited $LASTEXITCODE" }
+
+      - name: Smoke-test MSI
+        run: |
+          $msi = (Resolve-Path $env:MSI).Path
+          $p = Start-Process msiexec.exe -ArgumentList "/i `"$msi`" /qn /l*v install.log" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Get-Content install.log -Tail 50; throw "msiexec /i exited $($p.ExitCode)" }
+
+          $exe = Join-Path $env:ProgramFiles 'CrowdStrike\Falcon CLI\falcon.exe'
+          & $exe version
+          if ($LASTEXITCODE -ne 0) { throw "falcon version exited $LASTEXITCODE" }
+          $machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+          if ($machinePath -notlike '*\CrowdStrike\Falcon CLI*') { throw 'install folder missing from machine PATH' }
+
+          $p = Start-Process msiexec.exe -ArgumentList "/x `"$msi`" /qn" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "msiexec /x exited $($p.ExitCode)" }
+          if (Test-Path $exe) { throw 'falcon.exe still present after uninstall' }
+
+      - name: Upload MSI
+        run: |
+          $hash = (Get-FileHash $env:MSI -Algorithm SHA256).Hash.ToLower()
+          "$hash  $env:MSI" | Set-Content -Encoding ascii "$env:MSI.sha256"
+          gh release upload $env:GITHUB_REF_NAME $env:MSI "$env:MSI.sha256" --clobber
+
+  pkg:
+    needs: goreleaser
+    runs-on: macos-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Build universal pkg
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          arm="falcon-cli-${version}-macos-arm64"
+          intel="falcon-cli-${version}-macos-x86_64"
+          gh release download "$GITHUB_REF_NAME" --pattern "$arm" --pattern "$intel" --pattern checksums.txt
+          grep -E "  (${arm}|${intel})\$" checksums.txt | shasum -a 256 -c -
+
+          mkdir payload
+          lipo -create -output payload/falcon "$arm" "$intel"
+          chmod 0755 payload/falcon
+
+          # Installs to its own directory; the postinstall script links it into
+          # /usr/local/bin (see the script for why).
+          pkg="falcon-cli-${version}-macos-universal.pkg"
+          pkgbuild \
+            --root payload \
+            --install-location /usr/local/falcon-cli \
+            --scripts build/package/macos/scripts \
+            --identifier com.crowdstrike.falcon-cli \
+            --version "$version" \
+            "$pkg"
+          echo "PKG=${pkg}" >> "$GITHUB_ENV"
+
+      - name: Smoke-test pkg
+        run: |
+          sudo installer -pkg "$PKG" -target /
+          /usr/local/bin/falcon version
+          archs="$(lipo -archs /usr/local/falcon-cli/falcon)"
+          [[ "$archs" == *x86_64* && "$archs" == *arm64* ]] || { echo "not universal: $archs"; exit 1; }
+
+      - name: Upload pkg
+        run: |
+          shasum -a 256 "$PKG" > "${PKG}.sha256"
+          gh release upload "$GITHUB_REF_NAME" "$PKG" "${PKG}.sha256" --clobber
+
+  chocolatey:
+    needs: goreleaser
+    # choco only runs natively on Windows; the runner image includes it.
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Build package
+        run: |
+          $version = $env:GITHUB_REF_NAME.TrimStart('v')
+          $zip = "falcon-cli-$version-windows-x86_64.zip"
+          gh release download $env:GITHUB_REF_NAME --pattern checksums.txt
+          $checksum = Get-Content checksums.txt |
+            Where-Object { $_ -match "\s$([regex]::Escape($zip))$" } |
+            ForEach-Object { ($_ -split '\s+')[0] }
+          if (-not $checksum) { throw "no checksum for $zip in checksums.txt" }
+
+          $url = "https://github.com/$env:GITHUB_REPOSITORY/releases/download/$env:GITHUB_REF_NAME/$zip"
+          $install = 'build/package/chocolatey/tools/chocolateyinstall.ps1'
+          (Get-Content $install -Raw).Replace('__URL64__', $url).Replace('__CHECKSUM64__', $checksum) |
+            Set-Content $install -NoNewline
+
+          New-Item -ItemType Directory -Force choco-out | Out-Null
+          choco pack build/package/chocolatey/falcon-cli.nuspec --version $version --output-directory choco-out
+          if ($LASTEXITCODE -ne 0) { throw "choco pack exited $LASTEXITCODE" }
+          "VERSION=$version" >> $env:GITHUB_ENV
+
+      # Installs from the local package, which downloads the released zip and
+      # checks its sha256, so this exercises the URL and checksum end to end.
+      - name: Smoke-test package
+        run: |
+          choco install falcon-cli --source "$PWD\choco-out" --version $env:VERSION -y --no-progress
+          if ($LASTEXITCODE -ne 0) { throw "choco install exited $LASTEXITCODE" }
+          falcon version
+          if ($LASTEXITCODE -ne 0) { throw "falcon version exited $LASTEXITCODE" }
+
+      # Disabled for now; drop "false" to start publishing.
+      - name: Push to Chocolatey
+        if: false
+        env:
+          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
+        run: |
+          choco push "choco-out\falcon-cli.$env:VERSION.nupkg" --source https://push.chocolatey.org/ --api-key $env:CHOCOLATEY_API_KEY
+          if ($LASTEXITCODE -ne 0) { throw "choco push exited $LASTEXITCODE" }
