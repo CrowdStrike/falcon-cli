@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Packed by the chocolatey job in .github/workflows/release.yml, which passes the real version to choco pack. -->
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>falcon-cli</id>
+    <version>0.0.0</version>
+    <owners>CrowdStrike</owners>
+    <title>CrowdStrike Falcon CLI</title>
+    <authors>CrowdStrike</authors>
+    <projectUrl>https://github.com/CrowdStrike/falcon-cli</projectUrl>
+    <licenseUrl>https://github.com/CrowdStrike/falcon-cli/blob/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <projectSourceUrl>https://github.com/CrowdStrike/falcon-cli</projectSourceUrl>
+    <docsUrl>https://github.com/CrowdStrike/falcon-cli#readme</docsUrl>
+    <bugTrackerUrl>https://github.com/CrowdStrike/falcon-cli/issues</bugTrackerUrl>
+    <tags>crowdstrike falcon cli security</tags>
+    <summary>CLI for the CrowdStrike Falcon platform</summary>
+    <description>The CrowdStrike Falcon CLI allows you to work effortlessly with the CrowdStrike Falcon platform.</description>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>

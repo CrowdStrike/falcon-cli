@@ -25,5 +25,5 @@ go.work.sum
 
 bin/
 dist/
-falcon
+/falcon
 mise.toml
