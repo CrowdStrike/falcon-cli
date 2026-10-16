@@ -13,7 +13,6 @@ falcon <command> <subcommand> [flags]
 | `falcon auth` | Authenticate with the CrowdStrike Falcon API |
 | `falcon auth config` | Configure API credentials |
 | `falcon fcs` | Manage Falcon Cloud Security resources |
-| `falcon sensor` | Manage the CrowdStrike Falcon sensor |
 | `falcon version` | Display the CLI version |
 
 ## Falcon Cloud Security (`fcs`) subcommands
@@ -87,9 +86,6 @@ falcon fcs kubernetes clusters
 
 # Check compliance frameworks
 falcon fcs compliance frameworks
-
-# Download the Falcon sensor
-falcon sensor download
 
 # Check API client permissions
 falcon fcs doctor

@@ -55,7 +55,6 @@ pkg/
     auth/            Authentication commands
     fcs/             Falcon Cloud Security command tree
     root/            Root command registration
-    sensor/          Sensor management commands
     version/         Version command
   cmdutil/           Shared command utilities
   config/            Configuration management (viper)
