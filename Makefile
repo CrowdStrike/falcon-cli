@@ -55,7 +55,7 @@ test-e2e: ## Run live e2e tests against a real Falcon tenant (needs FALCON_CLIEN
 
 .PHONY: license
 license: addlicense ## Run addlicense to add license headers to source code.
-	$(ADDLICENSE) -c 'CrowdStrike, Inc.' -skip yaml -skip yml -skip ini -skip json -skip hcl -skip toml -s -f LICENSE $(shell pwd)
+	$(ADDLICENSE) -c 'CrowdStrike, Inc.' -skip yaml -skip yml -skip ini -skip json -skip hcl -skip toml -ignore '**/build/**' -s -f LICENSE $(shell pwd)
 
 .PHONY: lint
 lint: golangci-lint ## Run golangci-lint linter.
@@ -100,7 +100,7 @@ GORELEASER = $(LOCALBIN)/goreleaser
 ## Tool Versions
 GOLANGCI_LINT_VERSION ?= v2.11.3
 ADDLICENSE_VERSION ?= latest
-GORELEASER_VERSION ?= latest
+GORELEASER_VERSION ?= v2.18.2
 
 .PHONY: golangci-lint
 golangci-lint: $(GOLANGCI_LINT) ## Download golangci-lint locally if necessary.
