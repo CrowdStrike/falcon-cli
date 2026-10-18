@@ -25,6 +25,7 @@ import (
 
 	"github.com/crowdstrike/falcon-cli/internal/version"
 	"github.com/crowdstrike/falcon-cli/pkg/factory"
+	"github.com/crowdstrike/falcon-cli/pkg/utils"
 	"github.com/spf13/cobra"
 	"k8s.io/kubectl/pkg/util/templates"
 )
@@ -45,16 +46,14 @@ func NewCmdVersion(f *factory.Factory) *cobra.Command {
 		Long:    longDesc,
 		Example: examples,
 		RunE:    runVer(f),
-		Annotations: map[string]string{
-			"authSkipCheck": "true",
-		},
 	}
+	utils.DisableAuthCheck(cmd)
 	return cmd
 }
 
 func runVer(f *factory.Factory) func(cmd *cobra.Command, args []string) error {
 	return func(_ *cobra.Command, _ []string) error {
-		fmt.Fprint(f.IOStreams.Out, version.Version)
+		fmt.Fprintln(f.IOStreams.Out, version.Version)
 		return nil
 	}
 }
