@@ -72,16 +72,16 @@ var scopeRequirements = map[string]string{
 	"CloudComplianceFrameworkPostureSummaries": "CSPM Registration: Read",
 	"CloudComplianceRulePostureSummaries":      "CSPM Registration: Read",
 	// Suppression
-	"QuerySuppressionRules": "CSPM Registration: Read",
-	"GetSuppressionRules":   "CSPM Registration: Read",
-	"CreateSuppressionRule": "CSPM Registration: Write",
-	"DeleteSuppressionRule": "CSPM Registration: Write",
+	"QuerySuppressionRules":  "CSPM Registration: Read",
+	"GetSuppressionRules":    "CSPM Registration: Read",
+	"CreateSuppressionRule":  "CSPM Registration: Write",
+	"DeleteSuppressionRules": "CSPM Registration: Write",
 	// Groups — /cloud-security/entities/cloud-groups/v1 requires asset-groups:write
-	"CreateCloudGroupExternal": "Asset Groups: Write",
-	"UpdateCloudGroupExternal": "Asset Groups: Write",
-	"DeleteCloudGroupExternal": "Asset Groups: Write",
-	"GetCloudGroupExternal":    "Asset Groups: Read",
-	"QueryCloudGroupExternal":  "Asset Groups: Read",
+	"CreateCloudGroupExternal":    "Asset Groups: Write",
+	"UpdateCloudGroupExternal":    "Asset Groups: Write",
+	"DeleteCloudGroupsExternal":   "Asset Groups: Write",
+	"ListCloudGroupsByIDExternal": "Asset Groups: Read",
+	"ListCloudGroupsExternal":     "Asset Groups: Read",
 	// Kubernetes clusters + containers — /container-security/* endpoints
 	"ClusterCombined":   "Falcon Container Image: Read",
 	"ContainerCombined": "Falcon Container Image: Read",
@@ -89,6 +89,20 @@ var scopeRequirements = map[string]string{
 	"CombinedImageDetail": "Falcon Container Image: Read",
 	// Vulnerabilities
 	"ReadCombinedVulnerabilities": "Falcon Container Image: Read",
+
+	// Human-readable operation strings passed to HandleAPIError by commands.
+	"query cloud assets":                         "CSPM Assessment: Read",
+	"get cloud assets":                           "CSPM Assessment: Read",
+	"list cloud risks":                           "CSPM Assessment: Read",
+	"query IOM findings":                         "CSPM Assessment: Read",
+	"get IOM findings":                           "CSPM Assessment: Read",
+	"query compliance frameworks":                "CSPM Registration: Read",
+	"query compliance controls":                  "CSPM Registration: Read",
+	"get compliance framework posture summaries": "CSPM Registration: Read",
+	"get compliance rule posture summaries":      "CSPM Registration: Read",
+	"query suppression rules":                    "CSPM Registration: Read",
+	"get suppression rules":                      "CSPM Registration: Read",
+	"update suppression rule":                    "CSPM Registration: Write",
 }
 
 // cwppOperations are served by cwppcontainersecurityapi. A 403 on these

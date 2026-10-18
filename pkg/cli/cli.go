@@ -43,13 +43,6 @@ func Run() error {
 	cmdFactory := factory.New(version.Version)
 	rootCmd := root.NewCmdRoot(cmdFactory, version.Version)
 
-	cfg, err := cmdFactory.Config()
-
-	stderr := cmdFactory.IOStreams.ErrOut
-	if err != nil {
-		fmt.Fprintf(stderr, "Error loading config: %v", err)
-	}
-
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, _ []string) error {
 		err := initConfig(cmd)
 		if err != nil {
@@ -58,6 +51,12 @@ func Run() error {
 
 		if err = viper.GetViper().BindPFlags(cmd.PersistentFlags()); err != nil {
 			log.Fatalf("Error binding flags to viper: %v", err)
+		}
+
+		// Load config only after flags, env vars and the config file are bound
+		cfg, err := cmdFactory.Config()
+		if err != nil {
+			return fmt.Errorf("loading config: %w", err)
 		}
 
 		//Do auth check if the command requires authentication
@@ -143,13 +142,15 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) error {
 
 		err = v.BindPFlag(viperKey, f)
 		if err != nil {
-			fmt.Printf("Error binding flag %s: %v", f.Name, err)
+			fmt.Fprintf(os.Stderr, "Error binding flag %s: %v\n", f.Name, err)
 		}
 
 		// bind env var over the new viper key (profile.flag)
-		err = v.BindEnv(viperKey, fmt.Sprintf("FALCON_%s", strings.ToUpper(f.Name)))
+		// e.g. --client-id -> FALCON_CLIENT_ID
+		envName := "FALCON_" + strings.ToUpper(strings.ReplaceAll(f.Name, "-", "_"))
+		err = v.BindEnv(viperKey, envName)
 		if err != nil {
-			fmt.Printf("Error binding env var %s: %v", f.Name, err)
+			fmt.Fprintf(os.Stderr, "Error binding env var %s: %v\n", envName, err)
 		}
 	})
 

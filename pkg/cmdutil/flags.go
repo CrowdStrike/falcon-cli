@@ -94,15 +94,14 @@ func (o *TableFormattingOptions) ToOutputTableOptions() *output.TableOptions {
 			}
 		}
 	}
+	// --max-col-width 0 means unlimited, same as --no-truncate
+	noTruncate := o.NoTruncate || o.MaxColWidth <= 0
 	maxColWidth := o.MaxColWidth
-	if maxColWidth == 0 {
-		maxColWidth = 50
-	}
-	if o.NoTruncate {
+	if noTruncate {
 		maxColWidth = 0
 	}
 	return &output.TableOptions{
-		NoTruncate:  o.NoTruncate,
+		NoTruncate:  noTruncate,
 		Columns:     cols,
 		NoHeaders:   o.NoHeaders,
 		MaxColWidth: maxColWidth,
