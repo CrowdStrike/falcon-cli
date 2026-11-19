@@ -93,7 +93,9 @@ func newCmdGCPList(f *factory.Factory) *cobra.Command {
 			params := cspm_registration.NewGetCSPMGCPAccountParams()
 			params.Limit = &limit
 
-			resp, _, err := client.CspmRegistration.GetCSPMGCPAccount(params)
+			// Migrating to CloudRegistrationGcpGetEntities changes the output
+			// shape; deferred to a separate change.
+			resp, _, err := client.CspmRegistration.GetCSPMGCPAccount(params) //nolint:staticcheck // SA1019: migration deferred
 			if err != nil {
 				return cmdutil.HandleAPIError(err, "list GCP registrations")
 			}

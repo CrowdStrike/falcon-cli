@@ -92,7 +92,9 @@ func newCmdAzureList(f *factory.Factory) *cobra.Command {
 			params := cspm_registration.NewGetCSPMAzureAccountParams()
 			params.Limit = &limit
 
-			resp, _, err := client.CspmRegistration.GetCSPMAzureAccount(params)
+			// The replacement (cloud-security-registration-azure GET) requires a
+			// tenant or registration ID and cannot list all tenants.
+			resp, _, err := client.CspmRegistration.GetCSPMAzureAccount(params) //nolint:staticcheck // SA1019: no list-all replacement yet
 			if err != nil {
 				return cmdutil.HandleAPIError(err, "list Azure registrations")
 			}
