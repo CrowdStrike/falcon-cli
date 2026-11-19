@@ -37,7 +37,7 @@ var containerTableDef = &output.TableDefinition{
 		if !ok {
 			return nil
 		}
-		return []string{strp(r.ID), r.ClusterName, r.Namespace, r.ContainerImageID, r.Cloud, r.FirstSeen}
+		return []string{strp(r.ContainerID), r.ClusterName, r.Namespace, r.ContainerImageID, strp(r.CloudName), r.FirstSeen}
 	},
 }
 
