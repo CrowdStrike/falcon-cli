@@ -22,6 +22,7 @@ package config
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/MakeNowJust/heredoc"
@@ -49,38 +50,92 @@ func NewCmdConfig(f *factory.Factory) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "config <profile>",
+		Use:   "config [profile]",
 		Short: "Configures a profile to use with CrowdStrike Falcon API",
 		Long: templates.LongDesc(`
 		Configure falcon CLI with CrowdStrike Falcon API.
 		`),
 		Aliases: []string{"login", "init"},
 		Args:    cobra.MaximumNArgs(1),
-		RunE: func(_ *cobra.Command, args []string) error {
-			cfg, err := f.Config()
-			if err != nil {
-				return err
-			}
-			opts.Config = cfg
+		Example: templates.Examples(`
+			# Configure the default profile interactively
+			falcon auth config
 
+			# Configure a named profile non-interactively
+			falcon auth config prod --client-id <ID> --client-secret <SECRET>
+		`),
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 0 {
-				opts.Selector = args[1]
+				opts.Selector = args[0]
+			} else if cmd.Flags().Changed("profile") {
+				opts.Selector, _ = cmd.Flags().GetString("profile")
+			}
+
+			// Non-interactive: credentials supplied via flags
+			if cmd.Flags().Changed("client-id") && cmd.Flags().Changed("client-secret") {
+				opts.Config = configFromFlags(cmd)
+				if opts.Selector == "" {
+					opts.Selector = "default"
+				}
+				return saveConfig(opts)
 			}
 
 			if !opts.IO.CanPrompt() {
 				return errors.New(heredoc.Doc(`
 				 Interactive mode is disabled in this terminal.
 
-				 Please run this command in an interactive terminal.
+				 Please run this command in an interactive terminal, or pass
+				 --client-id and --client-secret.
 				`))
 			}
 
-			return configRun(opts)
+			if err := configRun(opts); err != nil {
+				return err
+			}
+			return saveConfig(opts)
 		},
 	}
 	utils.DisableAuthCheck(cmd)
 
 	return cmd
+}
+
+func configFromFlags(cmd *cobra.Command) config.Config {
+	get := func(name string) string {
+		v, _ := cmd.Flags().GetString(name)
+		return v
+	}
+	return config.Config{
+		CID:          get("cid"),
+		ClientID:     get("client-id"),
+		ClientSecret: get("client-secret"),
+		MemberCID:    get("member-cid"),
+		Cloud:        get("cloud"),
+		BaseURL:      get("base-url"),
+	}
+}
+
+func saveConfig(opts *Options) error {
+	if opts.Selector != "" {
+		opts.Config.Profile = opts.Selector
+	}
+	if opts.Config.ClientID == "" || opts.Config.ClientSecret == "" {
+		return errors.New("client ID and client secret are required")
+	}
+
+	path := config.ConfigFile
+	if path == "" {
+		var err error
+		if path, err = config.DefaultConfigFile(); err != nil {
+			return err
+		}
+	}
+
+	if err := opts.Config.Save(path); err != nil {
+		return fmt.Errorf("saving config: %w", err)
+	}
+	fmt.Fprintf(opts.IO.ErrOut, "Saved profile %q to %s\n", opts.Config.Profile, path)
+	return nil
 }
 
 func configRun(opts *Options) error {
@@ -131,9 +186,5 @@ func configRun(opts *Options) error {
 		})
 	}
 
-	err := survey.Ask(qs, &opts.Config)
-
-	// TODO: Validate and write config
-
-	return err
+	return survey.Ask(qs, &opts.Config)
 }

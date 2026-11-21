@@ -22,12 +22,17 @@ package config
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"net/url"
+	"os"
+	"path/filepath"
 
 	"github.com/crowdstrike/falcon-cli/internal/version"
 	"github.com/crowdstrike/gofalcon/falcon"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
 )
 
 // Config holds persistent configuration for falcon.
@@ -57,10 +62,6 @@ var ConfigFile string
 func NewConfig() (Config, error) {
 	c := &Config{}
 
-	if c.Cloud == "" {
-		c.Cloud = "autodiscover"
-	}
-
 	profile := viper.GetViper().GetString("profile")
 
 	c.CID = getViperKey("cid", profile)
@@ -69,6 +70,11 @@ func NewConfig() (Config, error) {
 	c.MemberCID = getViperKey("member_cid", profile)
 	c.Cloud = getViperKey("cloud", profile)
 	c.BaseURL = getViperKey("base_url", profile)
+	c.Profile = profile
+
+	if c.Cloud == "" {
+		c.Cloud = "autodiscover"
+	}
 
 	return *c, nil
 }
@@ -95,9 +101,68 @@ func (c Config) APIConfig(_ string) *falcon.ApiConfig {
 
 func getViperKey(key string, profile string) string {
 	if profile == "" {
-		return key
+		return viper.GetViper().GetString(key)
 	}
 
 	profileKey := fmt.Sprintf("%s.%s", profile, key)
 	return viper.GetViper().GetString(profileKey)
+}
+
+// profileEntry is the on-disk representation of a single profile.
+type profileEntry struct {
+	CID          string `yaml:"cid,omitempty"`
+	ClientID     string `yaml:"client_id"`
+	ClientSecret string `yaml:"client_secret"`
+	MemberCID    string `yaml:"member_cid,omitempty"`
+	Cloud        string `yaml:"cloud,omitempty"`
+	BaseURL      string `yaml:"base_url,omitempty"`
+}
+
+// DefaultConfigFile returns the default config file path ($HOME/.falcon/config.yaml).
+func DefaultConfigFile() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, ".falcon", "config.yaml"), nil
+}
+
+// Save writes the config as the named profile into the YAML file at path,
+// preserving any other profiles already stored there.
+func (c Config) Save(path string) error {
+	if c.Profile == "" {
+		return errors.New("profile name must not be empty")
+	}
+
+	profiles := map[string]any{}
+	data, err := os.ReadFile(filepath.Clean(path))
+	switch {
+	case err == nil:
+		if err := yaml.Unmarshal(data, &profiles); err != nil {
+			return fmt.Errorf("parsing %s: %w", path, err)
+		}
+		if profiles == nil {
+			profiles = map[string]any{}
+		}
+	case !errors.Is(err, fs.ErrNotExist):
+		return fmt.Errorf("reading %s: %w", path, err)
+	}
+
+	profiles[c.Profile] = profileEntry{
+		CID:          c.CID,
+		ClientID:     c.ClientID,
+		ClientSecret: c.ClientSecret,
+		MemberCID:    c.MemberCID,
+		Cloud:        c.Cloud,
+		BaseURL:      c.BaseURL,
+	}
+
+	out, err := yaml.Marshal(profiles)
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Clean(path), out, 0600)
 }

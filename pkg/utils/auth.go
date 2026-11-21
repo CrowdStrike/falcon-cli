@@ -51,6 +51,10 @@ func IsAuthCheckEnabled(cmd *cobra.Command) bool {
 	}
 
 	for c := cmd; c.Parent() != nil; c = c.Parent() {
+		// cobra's built-in shell completion script generator
+		if c.Name() == "completion" && !c.Parent().HasParent() {
+			return false
+		}
 		if c.Annotations != nil && c.Annotations["skipAuthCheck"] == "true" {
 			return false
 		}

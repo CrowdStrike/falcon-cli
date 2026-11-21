@@ -94,7 +94,7 @@ func NewCmdRoot(f *factory.Factory, _ string) *cobra.Command {
 
 func runRoot(cmd *cobra.Command, opts *Options) error {
 	if cmd.Flags().Changed("version") {
-		_, err := fmt.Fprint(opts.IO.Out, version.Version)
+		_, err := fmt.Fprintln(opts.IO.Out, version.Version)
 		return err
 	}
 
